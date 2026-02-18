@@ -82,7 +82,7 @@ app.use(async (req, res, next) => {
   req.session.flash = null;
 
   try {
-    const categories = await all("SELECT * FROM categories ORDER BY sort_order, name");
+    const categories = await all("SELECT * FROM categories WHERE is_enabled = TRUE ORDER BY sort_order, name");
     const grouped = {};
     for (const category of categories) {
       const group = category.group_name || "Разное";
@@ -104,7 +104,7 @@ app.get("/", async (req, res) => {
   const rawQ = String(req.query.q || "").trim();
   const q = rawQ.slice(0, 80);
 
-  const where = [];
+  const where = ["c.is_enabled = TRUE"];
   const params = [];
 
   if (categorySlug) {
@@ -306,7 +306,7 @@ app.post("/polls", isAuthenticated, upload.fields([{ name: "image", maxCount: 1 
     return res.redirect("/polls/new");
   }
 
-  const category = await get("SELECT id FROM categories WHERE id = ?", [categoryId]);
+  const category = await get("SELECT id FROM categories WHERE id = ? AND is_enabled = TRUE", [categoryId]);
   if (!category) {
     setFlash(req, "error", "Категория не найдена.");
     return res.redirect("/polls/new");

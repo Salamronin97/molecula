@@ -76,7 +76,8 @@ async function initDb() {
       name TEXT NOT NULL UNIQUE,
       slug TEXT NOT NULL UNIQUE,
       group_name TEXT DEFAULT 'Разное',
-      sort_order INTEGER DEFAULT 0
+      sort_order INTEGER DEFAULT 0,
+      is_enabled BOOLEAN DEFAULT TRUE
     )
   `);
 
@@ -150,22 +151,13 @@ async function initDb() {
   await run("ALTER TABLE polls ADD COLUMN IF NOT EXISTS video_path TEXT");
   await run("ALTER TABLE categories ADD COLUMN IF NOT EXISTS group_name TEXT DEFAULT 'Разное'");
   await run("ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0");
+  await run("ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT TRUE");
 
   const defaultCategories = [
-    { group: "Разное", slug: "b", name: "/b/ - бред", order: 1 },
-    { group: "Разное", slug: "o", name: "/o/ - озаки", order: 2 },
     { group: "Разное", slug: "soc", name: "/soc/ - общение", order: 3 },
-    { group: "Разное", slug: "media", name: "/media/ - анимация", order: 4 },
-    { group: "Разное", slug: "r", name: "/r/ - просьбы", order: 5 },
-    { group: "Разное", slug: "api", name: "/api/ - API", order: 6 },
-    { group: "Разное", slug: "rf", name: "/rf/ - убежище", order: 7 },
-    { group: "Новые доски", slug: "muz", name: "Мужикан", order: 8 },
-    { group: "Новые доски", slug: "ai-new", name: "Искусственный интеллект", order: 9 },
-    { group: "Новые доски", slug: "neurofap", name: "NeuroFap (18+)", order: 10 },
     { group: "Политика", slug: "int", name: "/int/ - international", order: 11 },
     { group: "Политика", slug: "po", name: "/po/ - политика", order: 12 },
     { group: "Политика", slug: "news", name: "/news/ - новости", order: 13 },
-    { group: "Политика", slug: "hry", name: "/hry/ - хрю", order: 14 },
     { group: "Тематика", slug: "au", name: "/au/ - автомобили и транспорт", order: 20 },
     { group: "Тематика", slug: "bi", name: "/bi/ - велосипеды", order: 21 },
     { group: "Тематика", slug: "biz", name: "/biz/ - бизнес", order: 22 },
@@ -181,7 +173,6 @@ async function initDb() {
     { group: "Тематика", slug: "hi", name: "/hi/ - история", order: 32 },
     { group: "Тематика", slug: "me", name: "/me/ - медицина", order: 33 },
     { group: "Тематика", slug: "mg", name: "/mg/ - магия", order: 34 },
-    { group: "Тематика", slug: "mlp", name: "/mlp/ - my little pony", order: 35 },
     { group: "Тематика", slug: "mo", name: "/mo/ - мотоциклы", order: 36 },
     { group: "Тематика", slug: "mov", name: "/mov/ - фильмы", order: 37 },
     { group: "Тематика", slug: "mu", name: "/mu/ - музыка", order: 38 },
@@ -196,10 +187,7 @@ async function initDb() {
     { group: "Тематика", slug: "tv", name: "/tv/ - тв и кино", order: 47 },
     { group: "Тематика", slug: "un", name: "/un/ - образование", order: 48 },
     { group: "Тематика", slug: "w", name: "/w/ - оружие", order: 49 },
-    { group: "Тематика", slug: "wh", name: "/wh/ - warhammer", order: 50 },
     { group: "Тематика", slug: "wm", name: "/wm/ - военная техника", order: 51 },
-    { group: "Тематика", slug: "wp", name: "/wp/ - обои и высокое разрешение", order: 52 },
-    { group: "Тематика", slug: "zog", name: "/zog/ - теории заговора", order: 53 },
     { group: "Творчество", slug: "de", name: "/de/ - дизайн", order: 60 },
     { group: "Творчество", slug: "di", name: "/di/ - столовая", order: 61 },
     { group: "Творчество", slug: "diy", name: "/diy/ - хобби", order: 62 },
@@ -217,48 +205,68 @@ async function initDb() {
     { group: "Техника и софт", slug: "ra", name: "/ra/ - радиотехника", order: 85 },
     { group: "Техника и софт", slug: "s", name: "/s/ - программы", order: 86 },
     { group: "Техника и софт", slug: "t", name: "/t/ - техника", order: 87 },
-    { group: "Техника и софт", slug: "web", name: "/web/ - веб-мастера", order: 88 },
     { group: "Игры", slug: "bg", name: "/bg/ - настольные игры", order: 100 },
     { group: "Игры", slug: "cg", name: "/cg/ - консоли", order: 101 },
-    { group: "Игры", slug: "es", name: "/es/ - бесконечное лето", order: 102 },
     { group: "Игры", slug: "gacha", name: "/gacha/ - гача-игры", order: 103 },
-    { group: "Игры", slug: "gsg", name: "/gsg/ - grand strategy games", order: 104 },
-    { group: "Игры", slug: "vn", name: "/vn/ - визуальные новеллы", order: 105 },
-    { group: "Игры", slug: "tes", name: "/tes/ - the elder scrolls", order: 106 },
     { group: "Игры", slug: "v", name: "/v/ - video games", order: 107 },
     { group: "Игры", slug: "vg", name: "/vg/ - video games general", order: 108 },
     { group: "Игры", slug: "wr", name: "/wr/ - текстовые авторские рпг", order: 109 },
     { group: "Японская культура", slug: "a", name: "/a/ - аниме", order: 120 },
     { group: "Японская культура", slug: "fd", name: "/fd/ - фэндом", order: 121 },
     { group: "Японская культура", slug: "ja", name: "/ja/ - японская культура", order: 122 },
-    { group: "Японская культура", slug: "ma", name: "/ma/ - манга", order: 123 },
-    { group: "Японская культура", slug: "vnj", name: "/vnj/ - визуальные новеллы", order: 124 },
-    { group: "Взрослым", slug: "fur", name: "/fur/ - фурри", order: 140 },
-    { group: "Взрослым", slug: "gg", name: "/gg/ - хорошие девушки", order: 141 },
-    { group: "Взрослым", slug: "vape", name: "/vape/ - электронные сигареты", order: 142 },
-    { group: "Взрослым", slug: "h", name: "/h/ - хентай", order: 143 },
-    { group: "Взрослым", slug: "ho", name: "/ho/ - прочий хентай", order: 144 },
-    { group: "Взрослым", slug: "hc", name: "/hc/ - hardcore", order: 145 },
-    { group: "Взрослым", slug: "e", name: "/e/ - extreme pron", order: 146 },
-    { group: "Взрослым", slug: "fet", name: "/fet/ - фетиш", order: 147 },
-    { group: "Взрослым", slug: "sex", name: "/sex/ - секс и отношения", order: 148 },
-    { group: "Взрослым", slug: "fag", name: "/fag/ - фагготрия", order: 149 }
+    { group: "Японская культура", slug: "ma", name: "/ma/ - манга", order: 123 }
   ];
 
   for (const category of defaultCategories) {
     await run(
       `
-      INSERT INTO categories (name, slug, group_name, sort_order)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO categories (name, slug, group_name, sort_order, is_enabled)
+      VALUES (?, ?, ?, ?, TRUE)
       ON CONFLICT (slug)
       DO UPDATE SET
         name = EXCLUDED.name,
         group_name = EXCLUDED.group_name,
-        sort_order = EXCLUDED.sort_order
+        sort_order = EXCLUDED.sort_order,
+        is_enabled = TRUE
       `,
       [category.name, category.slug, category.group, category.order]
     );
   }
+
+  const blockedSlugs = [
+    "b",
+    "o",
+    "media",
+    "api",
+    "rf",
+    "r",
+    "muz",
+    "ai-new",
+    "neurofap",
+    "hry",
+    "wh",
+    "wp",
+    "zog",
+    "mlp",
+    "web",
+    "es",
+    "gsg",
+    "vn",
+    "vnj",
+    "tes",
+    "fur",
+    "gg",
+    "vape",
+    "h",
+    "ho",
+    "hc",
+    "e",
+    "fet",
+    "sex",
+    "fag"
+  ];
+
+  await run("UPDATE categories SET is_enabled = FALSE WHERE slug = ANY(?::text[])", [blockedSlugs]);
 }
 
 module.exports = {

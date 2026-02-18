@@ -1,12 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap");
 
 :root {
-  --bg: #f3f6fb;
+  --bg: #eef3fb;
   --surface: #ffffff;
-  --text: #172033;
-  --muted: #687086;
-  --primary: #0f7bff;
-  --primary-soft: #d7e9ff;
+  --text: #141b2b;
+  --muted: #5d6780;
+  --primary: #0077ff;
+  --primary-soft: #d4e8ff;
   --danger: #d63649;
   --success: #12885f;
   --border: #dce3f0;
@@ -34,7 +34,10 @@
 body {
   margin: 0;
   font-family: "Manrope", sans-serif;
-  background: radial-gradient(circle at 10% 0%, #e8f2ff 0%, transparent 35%), var(--bg);
+  background:
+    radial-gradient(circle at 12% -5%, #cfe3ff 0%, transparent 34%),
+    radial-gradient(circle at 90% 10%, #dae9ff 0%, transparent 28%),
+    var(--bg);
   color: var(--text);
 }
 
@@ -59,6 +62,7 @@ a {
   backdrop-filter: blur(8px);
   background: color-mix(in srgb, var(--bg) 85%, transparent);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 6px 18px rgba(5, 24, 53, 0.06);
 }
 
 .topbar-inner {
@@ -86,7 +90,7 @@ a {
 button {
   border: 0;
   border-radius: 999px;
-  background: var(--primary);
+  background: linear-gradient(135deg, #1283ff, #0065e1);
   color: #fff;
   padding: 10px 16px;
   font-weight: 700;
@@ -119,7 +123,7 @@ button:hover {
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 20px;
   box-shadow: var(--shadow);
   padding: 18px;
 }
@@ -146,6 +150,12 @@ button:hover {
   display: grid;
   gap: 12px;
   margin-bottom: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.poll-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(18, 52, 105, 0.12);
 }
 
 .poll-meta {
@@ -246,9 +256,15 @@ form {
   gap: 8px;
 }
 
+h1,
+h2,
+h3 {
+  font-family: "Space Grotesk", sans-serif;
+  letter-spacing: -0.01em;
+}
+
 @media (max-width: 900px) {
   .main-grid {
     grid-template-columns: 1fr;
   }
 }
-

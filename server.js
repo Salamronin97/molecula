@@ -10,6 +10,7 @@ const { pool, run, get, all, initDb } = require("./db");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.set("trust proxy", 1);
 
 const uploadsDir = path.join(__dirname, "public", "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -50,7 +51,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: "auto",
+      sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7
     }
   })

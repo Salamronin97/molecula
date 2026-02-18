@@ -1,0 +1,41 @@
+<%- include("partials/header") %>
+<section class="panel" style="max-width:760px;margin:24px auto;">
+  <h1>Новое голосование</h1>
+  <form action="/polls" method="POST" enctype="multipart/form-data">
+    <label>Заголовок
+      <input type="text" name="title" required maxlength="140" />
+    </label>
+    <label>Описание
+      <textarea name="description" rows="4" required></textarea>
+    </label>
+    <label>Раздел
+      <select name="category_id" required>
+        <% categories.forEach((category) => { %>
+          <option value="<%= category.id %>"><%= category.name %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Дата окончания
+      <input type="datetime-local" name="end_at" required />
+    </label>
+    <label class="inline">
+      <input type="checkbox" name="is_anonymous" value="1" />
+      Анонимное голосование
+    </label>
+    <label>Фото
+      <input type="file" name="image" accept="image/*" />
+    </label>
+    <div id="options-wrap">
+      <label>Вариант 1
+        <input type="text" name="options" required />
+      </label>
+      <label>Вариант 2
+        <input type="text" name="options" required />
+      </label>
+    </div>
+    <button type="button" class="btn ghost" id="add-option">Добавить вариант</button>
+    <button type="submit">Опубликовать</button>
+  </form>
+</section>
+<%- include("partials/footer") %>
+

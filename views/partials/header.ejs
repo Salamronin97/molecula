@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Molecula</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script>
+    (function () {
+      const t = localStorage.getItem("theme") || "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/">Molecula</a>
+      <nav class="nav">
+        <a class="btn ghost" href="/">Лента</a>
+        <a class="btn ghost" href="/requisites">Реквизиты</a>
+        <% if (currentUser) { %>
+          <a class="btn ghost" href="/polls/new">Создать опрос</a>
+          <a class="btn ghost" href="/me">Кабинет</a>
+          <% if (currentUser.is_admin) { %>
+            <a class="btn ghost" href="/admin">Админ</a>
+          <% } %>
+          <form action="/logout" method="POST" style="display:inline">
+            <button type="submit" class="btn">Выйти</button>
+          </form>
+        <% } else { %>
+          <a class="btn ghost" href="/login">Вход</a>
+          <a class="btn" href="/register">Регистрация</a>
+        <% } %>
+        <button id="theme-toggle" class="btn ghost" type="button">Тема</button>
+      </nav>
+    </div>
+  </header>
+  <main class="container">
+    <% if (flash) { %>
+      <div class="flash <%= flash.type %>"><%= flash.message %></div>
+    <% } %>

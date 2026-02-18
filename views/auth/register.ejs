@@ -1,0 +1,18 @@
+<%- include("../partials/header") %>
+<section class="panel" style="max-width:520px;margin:30px auto;">
+  <h1>Регистрация</h1>
+  <form method="POST" action="/register">
+    <label>Username
+      <input type="text" name="username" required minlength="3" maxlength="30" />
+    </label>
+    <label>Email
+      <input type="email" name="email" required />
+    </label>
+    <label>Пароль
+      <input type="password" name="password" required minlength="6" />
+    </label>
+    <button type="submit">Создать аккаунт</button>
+  </form>
+</section>
+<%- include("../partials/footer") %>
+

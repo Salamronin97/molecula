@@ -1,0 +1,15 @@
+<%- include("../partials/header") %>
+<section class="panel" style="max-width:520px;margin:30px auto;">
+  <h1>Вход</h1>
+  <form method="POST" action="/login">
+    <label>Email
+      <input type="email" name="email" required />
+    </label>
+    <label>Пароль
+      <input type="password" name="password" required />
+    </label>
+    <button type="submit">Войти</button>
+  </form>
+</section>
+<%- include("../partials/footer") %>
+

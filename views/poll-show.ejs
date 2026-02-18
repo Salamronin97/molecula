@@ -1,0 +1,95 @@
+<%- include("partials/header") %>
+<article class="panel poll-card" style="margin-top:24px;">
+  <div class="poll-meta">
+    <span class="badge"><%= poll.category_name %></span>
+    <span>Автор: <a href="/profile/<%= poll.user_id %>"><%= poll.username %></a></span>
+    <span class="timer" data-countdown="<%= poll.end_at %>"></span>
+    <span><%= poll.is_anonymous ? "Анонимное" : "Публичное" %></span>
+  </div>
+  <h1><%= poll.title %></h1>
+  <p><%= poll.description %></p>
+  <% if (poll.image_path) { %>
+    <img src="<%= poll.image_path %>" alt="poll image" class="poll-image" />
+  <% } %>
+
+  <section class="panel" style="padding:14px;">
+    <h3>Результаты (<%= totalVotes %> голосов)</h3>
+    <% options.forEach((option) => { %>
+      <div style="margin-bottom:10px;">
+        <div class="small"><%= option.option_text %> - <%= option.vote_count %></div>
+        <div class="bar">
+          <span style="width:<%= totalVotes ? (option.vote_count * 100 / totalVotes).toFixed(1) : 0 %>%"></span>
+        </div>
+      </div>
+    <% }) %>
+  </section>
+
+  <% if (!poll.is_anonymous) { %>
+    <section class="panel" style="padding:14px;">
+      <h3>Кто проголосовал</h3>
+      <% if (!voters.length) { %>
+        <p class="small">Пока нет голосов.</p>
+      <% } %>
+      <% voters.forEach((vote) => { %>
+        <div class="small">
+          <a href="/profile/<%= vote.id %>"><%= vote.username %></a> выбрал(а): <%= vote.option_text %>
+        </div>
+      <% }) %>
+    </section>
+  <% } %>
+
+  <% if (currentUser) { %>
+    <% if (!userVote && new Date(poll.end_at) > now) { %>
+      <form action="/polls/<%= poll.id %>/vote" method="POST">
+        <h3>Проголосовать</h3>
+        <% options.forEach((option) => { %>
+          <label class="inline">
+            <input type="radio" name="option_id" value="<%= option.id %>" required />
+            <%= option.option_text %>
+          </label>
+        <% }) %>
+        <button type="submit">Отдать голос</button>
+      </form>
+    <% } else if (userVote) { %>
+      <div class="small">Вы уже проголосовали. Повторное голосование запрещено.</div>
+    <% } else { %>
+      <div class="small">Голосование завершено.</div>
+    <% } %>
+
+    <form action="/reports" method="POST">
+      <input type="hidden" name="poll_id" value="<%= poll.id %>" />
+      <input type="text" name="reason" placeholder="Пожаловаться на пост" required />
+      <button class="btn ghost" type="submit">Отправить жалобу</button>
+    </form>
+  <% } %>
+</article>
+
+<section class="panel" style="margin-top:14px;">
+  <h3>Комментарии</h3>
+  <% if (currentUser) { %>
+    <form action="/polls/<%= poll.id %>/comments" method="POST">
+      <textarea name="body" rows="3" required placeholder="Напишите комментарий"></textarea>
+      <button type="submit">Отправить</button>
+    </form>
+  <% } else { %>
+    <p class="small">Чтобы писать комментарии, войдите в аккаунт.</p>
+  <% } %>
+
+  <% comments.forEach((comment) => { %>
+    <div class="comment">
+      <div class="small">
+        <a href="/profile/<%= comment.user_id %>"><%= comment.username %></a> · <%= comment.created_at %>
+      </div>
+      <p><%= comment.body %></p>
+      <% if (currentUser) { %>
+        <form action="/reports" method="POST">
+          <input type="hidden" name="comment_id" value="<%= comment.id %>" />
+          <input type="text" name="reason" placeholder="Причина жалобы" required />
+          <button type="submit" class="btn ghost">Пожаловаться</button>
+        </form>
+      <% } %>
+    </div>
+  <% }) %>
+</section>
+
+<%- include("partials/footer") %>

@@ -1,0 +1,22 @@
+{
+  "name": "molecula",
+  "version": "1.0.0",
+  "description": "Interactive voting social platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^10.0.0",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "method-override": "^3.0.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.16.3"
+  }
+}

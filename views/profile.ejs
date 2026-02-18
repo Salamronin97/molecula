@@ -1,0 +1,29 @@
+<%- include("partials/header") %>
+
+<section class="panel" style="margin-top:24px;">
+  <h1><%= profileUser.username %></h1>
+  <p class="small">ID: <%= profileUser.id %> · Регистрация: <%= profileUser.created_at %> <%= profileUser.is_admin ? "· Админ" : "" %></p>
+  <p><%= profileUser.bio || "Пока без описания" %></p>
+  <% if (currentUser && currentUser.id === profileUser.id) { %>
+    <a class="btn ghost" href="/me/edit">Редактировать профиль</a>
+  <% } %>
+</section>
+
+<section style="margin-top:14px;">
+  <h2>Голосования пользователя</h2>
+  <% if (!polls.length) { %>
+    <div class="panel">Постов пока нет.</div>
+  <% } %>
+  <% polls.forEach((poll) => { %>
+    <article class="panel poll-card">
+      <h3><a href="/polls/<%= poll.id %>"><%= poll.title %></a></h3>
+      <div class="poll-meta">
+        <span>Голосов: <%= poll.vote_count %></span>
+        <span class="timer" data-countdown="<%= poll.end_at %>"></span>
+      </div>
+    </article>
+  <% }) %>
+</section>
+
+<%- include("partials/footer") %>
+

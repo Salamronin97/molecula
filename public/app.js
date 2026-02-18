@@ -17,13 +17,13 @@ document.querySelectorAll("[data-countdown]").forEach((el) => {
   const tick = () => {
     const diff = end - new Date();
     if (diff <= 0) {
-      el.textContent = "Ð“Ð¾Ð»Ð¾ÑÐ¾Ð²Ð°Ð½Ð¸Ðµ Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð¾";
+      el.textContent = "Ãîëîñîâàíèå çàâåðøåíî";
       return;
     }
     const h = Math.floor(diff / 1000 / 60 / 60);
     const m = Math.floor((diff / 1000 / 60) % 60);
     const s = Math.floor((diff / 1000) % 60);
-    el.textContent = `${h}Ñ‡ ${m}Ð¼ ${s}Ñ`;
+    el.textContent = `${h}÷ ${m}ì ${s}ñ`;
     requestAnimationFrame(() => setTimeout(tick, 1000));
   };
   tick();
@@ -36,7 +36,7 @@ if (addOptionBtn) {
     const input = document.createElement("input");
     input.type = "text";
     input.name = "options";
-    input.placeholder = "Ð•Ñ‰Ðµ Ð²Ð°Ñ€Ð¸Ð°Ð½Ñ‚ Ð¾Ñ‚Ð²ÐµÑ‚Ð°";
+    input.placeholder = "Åùå âàðèàíò îòâåòà";
     wrap.appendChild(input);
   });
 }
@@ -46,15 +46,16 @@ const imageModalTarget = document.getElementById("image-modal-target");
 const imageModalClose = document.getElementById("image-modal-close");
 
 if (imageModal && imageModalTarget && imageModalClose) {
-  document.querySelectorAll("[data-view-image]").forEach((img) => {
-    img.addEventListener("click", () => {
-      imageModalTarget.src = img.getAttribute("data-view-image");
-      imageModal.hidden = false;
+  const openButtons = document.querySelectorAll("[data-view-image]");
+  openButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      imageModalTarget.src = btn.getAttribute("data-view-image");
+      imageModal.classList.add("is-open");
     });
   });
 
   const closeModal = () => {
-    imageModal.hidden = true;
+    imageModal.classList.remove("is-open");
     imageModalTarget.src = "";
   };
 
@@ -63,6 +64,6 @@ if (imageModal && imageModalTarget && imageModalClose) {
     if (e.target === imageModal) closeModal();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !imageModal.hidden) closeModal();
+    if (e.key === "Escape" && imageModal.classList.contains("is-open")) closeModal();
   });
 }

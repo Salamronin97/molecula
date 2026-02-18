@@ -9,7 +9,9 @@
   <h1><%= poll.title %></h1>
   <p><%= poll.description %></p>
   <% if (poll.image_path) { %>
-    <img src="<%= poll.image_path %>" alt="poll image" class="poll-image" />
+    <div class="image-shell">
+      <img src="<%= poll.image_path %>" alt="poll image" class="poll-image poll-image-viewer" data-view-image="<%= poll.image_path %>" loading="lazy" />
+    </div>
   <% } %>
 
   <section class="panel" style="padding:14px;">
@@ -91,5 +93,10 @@
     </div>
   <% }) %>
 </section>
+
+<div class="image-modal" id="image-modal" hidden>
+  <button type="button" class="image-modal-close" id="image-modal-close">Закрыть</button>
+  <img id="image-modal-target" alt="full image" />
+</div>
 
 <%- include("partials/footer") %>

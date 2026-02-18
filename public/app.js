@@ -41,3 +41,28 @@ if (addOptionBtn) {
   });
 }
 
+const imageModal = document.getElementById("image-modal");
+const imageModalTarget = document.getElementById("image-modal-target");
+const imageModalClose = document.getElementById("image-modal-close");
+
+if (imageModal && imageModalTarget && imageModalClose) {
+  document.querySelectorAll("[data-view-image]").forEach((img) => {
+    img.addEventListener("click", () => {
+      imageModalTarget.src = img.getAttribute("data-view-image");
+      imageModal.hidden = false;
+    });
+  });
+
+  const closeModal = () => {
+    imageModal.hidden = true;
+    imageModalTarget.src = "";
+  };
+
+  imageModalClose.addEventListener("click", closeModal);
+  imageModal.addEventListener("click", (e) => {
+    if (e.target === imageModal) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !imageModal.hidden) closeModal();
+  });
+}

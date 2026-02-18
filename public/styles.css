@@ -170,8 +170,44 @@ button:hover {
   width: 100%;
   border-radius: 14px;
   border: 1px solid var(--border);
-  max-height: 320px;
+  max-height: 420px;
   object-fit: cover;
+}
+
+.poll-image-thumb {
+  max-height: 230px;
+}
+
+.image-shell {
+  width: min(760px, 100%);
+}
+
+.poll-image-viewer {
+  cursor: zoom-in;
+}
+
+.image-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 12, 23, 0.88);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 30px;
+}
+
+.image-modal img {
+  width: auto;
+  height: auto;
+  max-width: min(1100px, 95vw);
+  max-height: 88vh;
+  border-radius: 16px;
+}
+
+.image-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .badge {

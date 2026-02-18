@@ -30,7 +30,7 @@
         <h2><a href="/polls/<%= poll.id %>"><%= poll.title %></a></h2>
         <p><%= poll.description.slice(0, 190) %><%= poll.description.length > 190 ? "..." : "" %></p>
         <% if (poll.image_path) { %>
-          <img src="<%= poll.image_path %>" alt="cover" class="poll-image" />
+          <img src="<%= poll.image_path %>" alt="cover" class="poll-image poll-image-thumb" loading="lazy" />
         <% } %>
         <div class="poll-meta">
           <span>Голосов: <%= poll.vote_count %></span>
@@ -43,4 +43,3 @@
 </div>
 
 <%- include("partials/footer") %>
-

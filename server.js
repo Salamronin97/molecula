@@ -10,7 +10,7 @@ const { pool, run, get, all, initDb } = require("./db");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.set("trust proxy", 1);
+app.set("trust proxy", true);
 
 const uploadsDir = path.join(__dirname, "public", "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -42,6 +42,7 @@ app.use(methodOverride("_method"));
 
 app.use(
   session({
+    proxy: true,
     store: new PgSession({
       pool,
       createTableIfMissing: true
@@ -51,7 +52,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: "auto",
+      secure: false,
       sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7
     }
@@ -159,7 +160,7 @@ app.post("/register", async (req, res) => {
   };
 
   setFlash(req, "success", makeAdmin ? "Аккаунт создан. Вы назначены администратором." : "Аккаунт создан.");
-  res.redirect("/");
+  req.session.save(() => res.redirect("/"));
 });
 
 app.get("/login", (_req, res) => {
@@ -198,11 +199,14 @@ app.post("/login", async (req, res) => {
     is_admin: !!user.is_admin
   };
   setFlash(req, "success", "Вы вошли в систему.");
-  res.redirect("/");
+  req.session.save(() => res.redirect("/"));
 });
 
 app.post("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/"));
+  req.session.destroy(() => {
+    res.clearCookie("connect.sid");
+    res.redirect("/");
+  });
 });
 
 app.get("/me", isAuthenticated, (req, res) => {
@@ -430,7 +434,7 @@ app.post("/reports", isAuthenticated, async (req, res) => {
     [req.session.user.id, poll_id || null, comment_id || null, reason.trim().slice(0, 300)]
   );
   setFlash(req, "success", "Жалоба отправлена.");
-  res.redirect("back");
+  res.redirect(req.get("Referrer") || "/");
 });
 
 app.get("/admin", isAdmin, async (_req, res) => {
@@ -506,7 +510,7 @@ app.use((_req, res) => {
 
 app.use((err, req, res, _next) => {
   setFlash(req, "error", err.message || "Ошибка сервера.");
-  res.redirect("back");
+  res.redirect(req.get("Referrer") || "/");
 });
 
 async function bootstrap() {

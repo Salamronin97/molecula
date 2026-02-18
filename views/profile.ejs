@@ -1,12 +1,20 @@
 ﻿<%- include("partials/header") %>
 
 <section class="panel" style="margin-top:24px;">
-  <h1><%= profileUser.username %></h1>
-  <p class="small">ID: <%= profileUser.id %> · Регистрация: <%= profileUser.created_at %> <%= profileUser.is_admin ? "· Админ" : "" %></p>
-  <p><%= profileUser.bio || "Пока без описания" %></p>
-  <% if (currentUser && currentUser.id === profileUser.id) { %>
-    <a class="btn ghost" href="/me/edit">Редактировать профиль</a>
-  <% } %>
+  <div class="profile-shell">
+    <div>
+      <h1><%= profileUser.username %></h1>
+      <p class="small">ID: <%= profileUser.id %> · Регистрация: <%= profileUser.created_at %> <%= profileUser.is_admin ? "· Админ" : "" %></p>
+      <p><%= profileUser.bio || "Пока без описания" %></p>
+      <% if (currentUser && currentUser.id === profileUser.id) { %>
+        <a class="btn ghost" href="/me/edit">Редактировать профиль</a>
+      <% } %>
+    </div>
+    <div class="profile-stat">
+      <div class="small">Всего опросов</div>
+      <h2><%= polls.length %></h2>
+    </div>
+  </div>
 </section>
 
 <section style="margin-top:14px;">

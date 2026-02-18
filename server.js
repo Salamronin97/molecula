@@ -60,7 +60,11 @@ app.use(
 );
 
 function setFlash(req, type, message) {
-  req.session.flash = { type, message };
+  let normalizedMessage = message;
+  if (typeof message === "string" && /[РС][^a-zA-Z0-9]/.test(message)) {
+    normalizedMessage = type === "success" ? "Операция выполнена." : "Произошла ошибка. Проверьте введенные данные.";
+  }
+  req.session.flash = { type, message: normalizedMessage };
 }
 
 function isAuthenticated(req, res, next) {

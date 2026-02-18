@@ -41,30 +41,3 @@ if (addOptionBtn) {
   });
 }
 
-const imageModal = document.getElementById("image-modal");
-const imageModalTarget = document.getElementById("image-modal-target");
-const imageModalClose = document.getElementById("image-modal-close");
-
-if (imageModal && imageModalTarget && imageModalClose) {
-  const openButtons = document.querySelectorAll("[data-view-image]");
-  openButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      imageModalTarget.src = btn.getAttribute("data-view-image");
-      imageModal.classList.add("is-open");
-    });
-  });
-
-  const closeModal = () => {
-    imageModal.classList.remove("is-open");
-    imageModalTarget.src = "";
-  };
-
-  imageModalClose.addEventListener("click", closeModal);
-  imageModal.addEventListener("click", (e) => {
-    if (e.target === imageModal) closeModal();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && imageModal.classList.contains("is-open")) closeModal();
-  });
-}
-

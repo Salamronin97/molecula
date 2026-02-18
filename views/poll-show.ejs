@@ -1,5 +1,6 @@
 ﻿<%- include("partials/header") %>
 
+<div class="poll-page">
 <article class="panel poll-card" style="margin-top:24px;">
   <div class="poll-meta">
     <span class="badge"><%= poll.category_name %></span>
@@ -13,8 +14,7 @@
 
   <% if (poll.image_path) { %>
     <div class="image-shell">
-      <img src="<%= poll.image_path %>" alt="poll image" class="poll-image poll-image-main" loading="lazy" onerror="this.style.display='none'" />
-      <button type="button" class="btn ghost image-open-btn" data-view-image="<%= poll.image_path %>">Открыть фото</button>
+      <img src="<%= poll.image_path %>" alt="poll image" class="poll-image poll-image-main" loading="lazy" onerror="this.closest('.image-shell').style.display='none'" />
     </div>
   <% } %>
 
@@ -48,12 +48,14 @@
     <% if (!userVote && new Date(poll.end_at) > now) { %>
       <form action="/polls/<%= poll.id %>/vote" method="POST">
         <h3>Проголосовать</h3>
-        <% options.forEach((option) => { %>
-          <label class="inline">
-            <input type="radio" name="option_id" value="<%= option.id %>" required />
-            <%= option.option_text %>
-          </label>
-        <% }) %>
+        <div class="vote-options">
+          <% options.forEach((option) => { %>
+            <label class="option-item">
+              <input type="radio" name="option_id" value="<%= option.id %>" required />
+              <span><%= option.option_text %></span>
+            </label>
+          <% }) %>
+        </div>
         <button type="submit">Отдать голос</button>
       </form>
     <% } else if (userVote) { %>
@@ -97,10 +99,6 @@
     </div>
   <% }) %>
 </section>
-
-<div class="image-modal" id="image-modal">
-  <button type="button" class="image-modal-close" id="image-modal-close">Закрыть</button>
-  <img id="image-modal-target" alt="full image" />
 </div>
 
 <%- include("partials/footer") %>

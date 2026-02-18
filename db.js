@@ -1,14 +1,39 @@
 const { Pool } = require("pg");
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required. Example: postgres://user:pass@host:5432/dbname");
+function buildPoolConfig() {
+  const connectionString = process.env.DATABASE_URL;
+  const useSsl = process.env.NODE_ENV === "production";
+
+  if (connectionString) {
+    return {
+      connectionString: connectionString.trim(),
+      ssl: useSsl ? { rejectUnauthorized: false } : false
+    };
+  }
+
+  const host = process.env.PGHOST;
+  const port = Number(process.env.PGPORT || 5432);
+  const database = process.env.PGDATABASE;
+  const user = process.env.PGUSER;
+  const password = String(process.env.PGPASSWORD || "");
+
+  if (!host || !database || !user) {
+    throw new Error(
+      "DATABASE_URL or PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD must be set"
+    );
+  }
+
+  return {
+    host,
+    port,
+    database,
+    user,
+    password,
+    ssl: useSsl ? { rejectUnauthorized: false } : false
+  };
 }
 
-const pool = new Pool({
-  connectionString,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
-});
+const pool = new Pool(buildPoolConfig());
 
 function toPgSql(sql) {
   let idx = 0;
@@ -132,4 +157,3 @@ module.exports = {
   all,
   initDb
 };
-

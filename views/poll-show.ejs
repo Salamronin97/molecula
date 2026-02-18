@@ -14,7 +14,9 @@
 
   <% if (poll.image_path) { %>
     <div class="image-shell">
-      <img src="<%= poll.image_path %>" alt="poll image" class="poll-image poll-image-main" loading="lazy" onerror="this.closest('.image-shell').style.display='none'" />
+      <a href="<%= poll.image_path %>" target="_blank" rel="noopener noreferrer" class="image-link">
+        <img src="<%= poll.image_path %>" alt="poll image" class="poll-image poll-image-main" loading="lazy" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterend','<div class=&quot;small&quot;>Фото недоступно</div>');" />
+      </a>
     </div>
   <% } %>
 

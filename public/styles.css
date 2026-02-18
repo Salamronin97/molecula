@@ -63,7 +63,7 @@ a {
 }
 
 .container {
-  width: min(1040px, 92%);
+  width: min(980px, 92%);
   margin: 0 auto;
 }
 
@@ -159,7 +159,7 @@ button:hover {
   border: 1px solid var(--border);
   border-radius: 20px;
   box-shadow: var(--shadow);
-  padding: 18px;
+  padding: 14px;
 }
 
 .category-list {
@@ -212,12 +212,12 @@ button:hover {
   width: 100%;
   border-radius: 14px;
   border: 1px solid var(--border);
-  max-height: 280px;
+  max-height: 220px;
   object-fit: cover;
 }
 
 .poll-image-thumb {
-  max-height: 240px;
+  max-height: 180px;
 }
 
 .image-shell {
@@ -225,7 +225,7 @@ button:hover {
 }
 
 .poll-image-main {
-  max-height: 460px;
+  max-height: 320px;
   object-fit: contain;
   background: color-mix(in srgb, var(--primary-soft) 45%, var(--surface));
 }
@@ -293,8 +293,13 @@ form {
 }
 
 .poll-page {
-  max-width: 860px;
+  max-width: 760px;
   margin: 0 auto;
+}
+
+.image-link {
+  display: block;
+  cursor: zoom-in;
 }
 
 .vote-options {

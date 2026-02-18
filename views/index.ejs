@@ -30,7 +30,9 @@
         <p><%= poll.description.slice(0, 190) %><%= poll.description.length > 190 ? "..." : "" %></p>
 
         <% if (poll.image_path) { %>
-          <img src="<%= poll.image_path %>" alt="cover" class="poll-image poll-image-thumb" loading="lazy" onerror="this.style.display='none'" />
+          <a href="/polls/<%= poll.id %>" class="image-link">
+            <img src="<%= poll.image_path %>" alt="cover" class="poll-image poll-image-thumb" loading="lazy" onerror="this.style.display='none'" />
+          </a>
         <% } %>
 
         <div class="poll-meta">

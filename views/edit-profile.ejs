@@ -1,18 +1,25 @@
-﻿<%- include("partials/header") %>
+<%- include("partials/header") %>
 
-<section class="panel" style="max-width:700px;margin:24px auto;">
-  <h1>Редактировать профиль</h1>
-  <form method="POST" action="/me/edit">
-    <label>Username
+<section class="thread-form-page">
+  <div class="thread-form-title">Редактировать профиль</div>
+  <form method="POST" action="/me/edit" enctype="multipart/form-data" class="thread-form-card">
+    <div class="form-line">
+      <label>Username</label>
       <input type="text" value="<%= user.username %>" disabled />
-    </label>
-    <label>Email
+    </div>
+    <div class="form-line">
+      <label>Email</label>
       <input type="text" value="<%= user.email %>" disabled />
-    </label>
-    <label>О себе
+    </div>
+    <div class="form-line">
+      <label>Аватар</label>
+      <input type="file" name="avatar" accept="image/*" />
+    </div>
+    <div class="form-line">
+      <label>О себе</label>
       <textarea name="bio" rows="6" maxlength="500"><%= user.bio || "" %></textarea>
-    </label>
-    <button type="submit">Сохранить</button>
+    </div>
+    <button type="submit" class="toolbar-btn toolbar-btn-primary">Сохранить</button>
   </form>
 </section>
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -6,30 +6,32 @@
   <title>Molecula</title>
   <link rel="stylesheet" href="/styles.css" />
   <script>
-    (function () {
-      const t = localStorage.getItem("theme") || "light";
-      document.documentElement.setAttribute("data-theme", t);
+    (function applyUiState() {
+      const theme = localStorage.getItem("theme") || "light";
+      const lang = localStorage.getItem("lang") || "ru";
+      document.documentElement.setAttribute("data-theme", theme);
+      document.documentElement.setAttribute("lang", lang);
     })();
   </script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <a class="brand" href="/">Molecula</a>
-      <nav class="nav">
-        <a class="btn ghost" href="/">Лента</a>
-        <% if (currentUser) { %>
-          <a class="btn ghost" href="/polls/new">Создать опрос</a>
-          <a class="btn ghost" href="/me">Кабинет</a>
-          <form action="/logout" method="POST" style="display:inline">
-            <button type="submit" class="btn">Выйти</button>
-          </form>
-        <% } else { %>
-          <a class="btn ghost" href="/login">Вход</a>
-          <a class="btn" href="/register">Регистрация</a>
-        <% } %>
-        <button id="theme-toggle" class="btn ghost" type="button">Тема</button>
-      </nav>
+  <header class="board-header">
+    <div class="board-header-top">
+      <a href="/">Главная</a>
+      <a href="/requisites">Реквизиты</a>
+      <a href="/">Каталог</a>
+      <span class="header-right-state">Molecula online</span>
+    </div>
+    <div class="board-header-main">
+      <a class="board-logo" href="/">Molecula</a>
+      <div class="header-center-nav">
+        <a href="/">Лента</a>
+        <a href="/polls/new" class="thread-create-link">Создать опрос</a>
+      </div>
+      <div class="header-controls">
+        <button type="button" id="theme-toggle" class="tiny-btn">Тема</button>
+        <button type="button" id="lang-toggle" class="tiny-btn">Язык</button>
+      </div>
     </div>
   </header>
 
@@ -40,7 +42,22 @@
     <% } %>
   </div>
 
-  <main class="container">
+  <main class="page-wrap">
+    <section class="user-toolbar">
+      <% if (currentUser) { %>
+        <a href="/me" class="toolbar-btn">Кабинет</a>
+        <% if (currentUser.is_admin) { %>
+          <a href="/admin" class="toolbar-btn">Админ</a>
+        <% } %>
+        <form action="/logout" method="POST">
+          <button type="submit" class="toolbar-btn toolbar-btn-primary">Выйти</button>
+        </form>
+      <% } else { %>
+        <a href="/login" class="toolbar-btn">Вход</a>
+        <a href="/register" class="toolbar-btn toolbar-btn-primary">Регистрация</a>
+      <% } %>
+    </section>
+
     <% if (flash) { %>
       <div class="flash <%= flash.type %>"><%= flash.message %></div>
     <% } %>

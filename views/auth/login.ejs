@@ -1,14 +1,16 @@
-﻿<%- include("../partials/header") %>
-<section class="panel" style="max-width:520px;margin:30px auto;">
-  <h1>Вход</h1>
-  <form method="POST" action="/login">
-    <label>Email
+<%- include("../partials/header") %>
+<section class="thread-form-page">
+  <div class="thread-form-title">Вход</div>
+  <form method="POST" action="/login" class="thread-form-card">
+    <div class="form-line">
+      <label>Email</label>
       <input type="email" name="email" required />
-    </label>
-    <label>Пароль
+    </div>
+    <div class="form-line">
+      <label>Пароль</label>
       <input type="password" name="password" required />
-    </label>
-    <button type="submit">Войти</button>
+    </div>
+    <button type="submit" class="toolbar-btn toolbar-btn-primary">Войти</button>
   </form>
 </section>
 <%- include("../partials/footer") %>

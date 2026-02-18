@@ -1,11 +1,11 @@
-<%- include("partials/header") %>
+п»ї<%- include("partials/header") %>
 
 <article class="panel poll-card" style="margin-top:24px;">
   <div class="poll-meta">
     <span class="badge"><%= poll.category_name %></span>
-    <span>Автор: <a href="/profile/<%= poll.user_id %>"><%= poll.username %></a></span>
+    <span>РђРІС‚РѕСЂ: <a href="/profile/<%= poll.user_id %>"><%= poll.username %></a></span>
     <span class="timer" data-countdown="<%= poll.end_at %>"></span>
-    <span><%= poll.is_anonymous ? "Анонимное" : "Публичное" %></span>
+    <span><%= poll.is_anonymous ? "РђРЅРѕРЅРёРјРЅРѕРµ" : "РџСѓР±Р»РёС‡РЅРѕРµ" %></span>
   </div>
 
   <h1><%= poll.title %></h1>
@@ -13,13 +13,13 @@
 
   <% if (poll.image_path) { %>
     <div class="image-shell">
-      <img src="<%= poll.image_path %>" alt="poll image" class="poll-image poll-image-main" loading="lazy" />
-      <button type="button" class="btn ghost image-open-btn" data-view-image="<%= poll.image_path %>">Открыть фото</button>
+      <img src="<%= poll.image_path %>" alt="poll image" class="poll-image poll-image-main" loading="lazy" onerror="this.style.display='none'" />
+      <button type="button" class="btn ghost image-open-btn" data-view-image="<%= poll.image_path %>">РћС‚РєСЂС‹С‚СЊ С„РѕС‚Рѕ</button>
     </div>
   <% } %>
 
   <section class="panel" style="padding:14px;">
-    <h3>Результаты (<%= totalVotes %> голосов)</h3>
+    <h3>Р РµР·СѓР»СЊС‚Р°С‚С‹ (<%= totalVotes %> РіРѕР»РѕСЃРѕРІ)</h3>
     <% options.forEach((option) => { %>
       <div style="margin-bottom:10px;">
         <div class="small"><%= option.option_text %> - <%= option.vote_count %></div>
@@ -32,13 +32,13 @@
 
   <% if (!poll.is_anonymous) { %>
     <section class="panel" style="padding:14px;">
-      <h3>Кто проголосовал</h3>
+      <h3>РљС‚Рѕ РїСЂРѕРіРѕР»РѕСЃРѕРІР°Р»</h3>
       <% if (!voters.length) { %>
-        <p class="small">Пока нет голосов.</p>
+        <p class="small">РџРѕРєР° РЅРµС‚ РіРѕР»РѕСЃРѕРІ.</p>
       <% } %>
       <% voters.forEach((vote) => { %>
         <div class="small">
-          <a href="/profile/<%= vote.id %>"><%= vote.username %></a> выбрал(а): <%= vote.option_text %>
+          <a href="/profile/<%= vote.id %>"><%= vote.username %></a> РІС‹Р±СЂР°Р»(Р°): <%= vote.option_text %>
         </div>
       <% }) %>
     </section>
@@ -47,51 +47,51 @@
   <% if (currentUser) { %>
     <% if (!userVote && new Date(poll.end_at) > now) { %>
       <form action="/polls/<%= poll.id %>/vote" method="POST">
-        <h3>Проголосовать</h3>
+        <h3>РџСЂРѕРіРѕР»РѕСЃРѕРІР°С‚СЊ</h3>
         <% options.forEach((option) => { %>
           <label class="inline">
             <input type="radio" name="option_id" value="<%= option.id %>" required />
             <%= option.option_text %>
           </label>
         <% }) %>
-        <button type="submit">Отдать голос</button>
+        <button type="submit">РћС‚РґР°С‚СЊ РіРѕР»РѕСЃ</button>
       </form>
     <% } else if (userVote) { %>
-      <div class="small">Вы уже проголосовали. Повторное голосование запрещено.</div>
+      <div class="small">Р’С‹ СѓР¶Рµ РїСЂРѕРіРѕР»РѕСЃРѕРІР°Р»Рё. РџРѕРІС‚РѕСЂРЅРѕРµ РіРѕР»РѕСЃРѕРІР°РЅРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ.</div>
     <% } else { %>
-      <div class="small">Голосование завершено.</div>
+      <div class="small">Р“РѕР»РѕСЃРѕРІР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРѕ.</div>
     <% } %>
 
     <form action="/reports" method="POST">
       <input type="hidden" name="poll_id" value="<%= poll.id %>" />
-      <input type="text" name="reason" placeholder="Пожаловаться на пост" required />
-      <button class="btn ghost" type="submit">Отправить жалобу</button>
+      <input type="text" name="reason" placeholder="РџРѕР¶Р°Р»РѕРІР°С‚СЊСЃСЏ РЅР° РїРѕСЃС‚" required />
+      <button class="btn ghost" type="submit">РћС‚РїСЂР°РІРёС‚СЊ Р¶Р°Р»РѕР±Сѓ</button>
     </form>
   <% } %>
 </article>
 
 <section class="panel" style="margin-top:14px;">
-  <h3>Комментарии</h3>
+  <h3>РљРѕРјРјРµРЅС‚Р°СЂРёРё</h3>
   <% if (currentUser) { %>
     <form action="/polls/<%= poll.id %>/comments" method="POST">
-      <textarea name="body" rows="3" required placeholder="Напишите комментарий"></textarea>
-      <button type="submit">Отправить</button>
+      <textarea name="body" rows="3" required placeholder="РќР°РїРёС€РёС‚Рµ РєРѕРјРјРµРЅС‚Р°СЂРёР№"></textarea>
+      <button type="submit">РћС‚РїСЂР°РІРёС‚СЊ</button>
     </form>
   <% } else { %>
-    <p class="small">Чтобы писать комментарии, войдите в аккаунт.</p>
+    <p class="small">Р§С‚РѕР±С‹ РїРёСЃР°С‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёРё, РІРѕР№РґРёС‚Рµ РІ Р°РєРєР°СѓРЅС‚.</p>
   <% } %>
 
   <% comments.forEach((comment) => { %>
     <div class="comment">
       <div class="small">
-        <a href="/profile/<%= comment.user_id %>"><%= comment.username %></a> · <%= comment.created_at %>
+        <a href="/profile/<%= comment.user_id %>"><%= comment.username %></a> В· <%= comment.created_at %>
       </div>
       <p><%= comment.body %></p>
       <% if (currentUser) { %>
         <form action="/reports" method="POST">
           <input type="hidden" name="comment_id" value="<%= comment.id %>" />
-          <input type="text" name="reason" placeholder="Причина жалобы" required />
-          <button type="submit" class="btn ghost">Пожаловаться</button>
+          <input type="text" name="reason" placeholder="РџСЂРёС‡РёРЅР° Р¶Р°Р»РѕР±С‹" required />
+          <button type="submit" class="btn ghost">РџРѕР¶Р°Р»РѕРІР°С‚СЊСЃСЏ</button>
         </form>
       <% } %>
     </div>
@@ -99,7 +99,7 @@
 </section>
 
 <div class="image-modal" id="image-modal">
-  <button type="button" class="image-modal-close" id="image-modal-close">Закрыть</button>
+  <button type="button" class="image-modal-close" id="image-modal-close">Р—Р°РєСЂС‹С‚СЊ</button>
   <img id="image-modal-target" alt="full image" />
 </div>
 

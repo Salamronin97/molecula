@@ -1,4 +1,4 @@
-<%- include("partials/header") %>
+﻿<%- include("partials/header") %>
 
 <div class="main-grid">
   <aside class="panel">
@@ -6,10 +6,7 @@
     <div class="category-list">
       <a href="/" class="category-link <%= !selectedCategory ? 'active' : '' %>">Все</a>
       <% categories.forEach((category) => { %>
-        <a
-          href="/?category=<%= category.slug %>"
-          class="category-link <%= selectedCategory === category.slug ? 'active' : '' %>"
-        >
+        <a href="/?category=<%= category.slug %>" class="category-link <%= selectedCategory === category.slug ? 'active' : '' %>">
           <%= category.name %>
         </a>
       <% }) %>
@@ -20,6 +17,7 @@
     <% if (!polls.length) { %>
       <div class="panel">Пока нет голосований в этом разделе.</div>
     <% } %>
+
     <% polls.forEach((poll) => { %>
       <article class="panel poll-card">
         <div class="poll-meta">
@@ -27,11 +25,14 @@
           <span>Автор: <a href="/profile/<%= poll.user_id %>"><%= poll.username %></a></span>
           <span class="timer" data-countdown="<%= poll.end_at %>"></span>
         </div>
+
         <h2><a href="/polls/<%= poll.id %>"><%= poll.title %></a></h2>
         <p><%= poll.description.slice(0, 190) %><%= poll.description.length > 190 ? "..." : "" %></p>
+
         <% if (poll.image_path) { %>
-          <img src="<%= poll.image_path %>" alt="cover" class="poll-image poll-image-thumb" loading="lazy" />
+          <img src="<%= poll.image_path %>" alt="cover" class="poll-image poll-image-thumb" loading="lazy" onerror="this.style.display='none'" />
         <% } %>
+
         <div class="poll-meta">
           <span>Голосов: <%= poll.vote_count %></span>
           <span>Комментариев: <%= poll.comment_count %></span>

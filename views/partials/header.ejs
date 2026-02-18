@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+п»ї<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -17,26 +17,26 @@
     <div class="container topbar-inner">
       <a class="brand" href="/">Molecula</a>
       <nav class="nav">
-        <a class="btn ghost" href="/">Лента</a>
+        <a class="btn ghost" href="/">Р›РµРЅС‚Р°</a>
         <% if (currentUser) { %>
-          <a class="btn ghost" href="/polls/new">Создать опрос</a>
-          <a class="btn ghost" href="/me">Кабинет</a>
+          <a class="btn ghost" href="/polls/new">РЎРѕР·РґР°С‚СЊ РѕРїСЂРѕСЃ</a>
+          <a class="btn ghost" href="/me">РљР°Р±РёРЅРµС‚</a>
           <form action="/logout" method="POST" style="display:inline">
-            <button type="submit" class="btn">Выйти</button>
+            <button type="submit" class="btn">Р’С‹Р№С‚Рё</button>
           </form>
         <% } else { %>
-          <a class="btn ghost" href="/login">Вход</a>
-          <a class="btn" href="/register">Регистрация</a>
+          <a class="btn ghost" href="/login">Р’С…РѕРґ</a>
+          <a class="btn" href="/register">Р РµРіРёСЃС‚СЂР°С†РёСЏ</a>
         <% } %>
-        <button id="theme-toggle" class="btn ghost" type="button">Тема</button>
+        <button id="theme-toggle" class="btn ghost" type="button">РўРµРјР°</button>
       </nav>
     </div>
   </header>
 
   <div class="quick-dock">
-    <a class="dock-item" href="/requisites" title="Реквизиты">?</a>
+    <a class="dock-item" href="/requisites" title="Р РµРєРІРёР·РёС‚С‹">в‚Ѕ</a>
     <% if (currentUser && currentUser.is_admin) { %>
-      <a class="dock-item" href="/admin" title="Админ">A</a>
+      <a class="dock-item" href="/admin" title="РђРґРјРёРЅ">A</a>
     <% } %>
   </div>
 

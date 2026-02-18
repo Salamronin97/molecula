@@ -1,4 +1,4 @@
-const path = require("path");
+﻿const path = require("path");
 const fs = require("fs");
 const express = require("express");
 const session = require("express-session");
@@ -30,7 +30,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) return cb(null, true);
-    cb(new Error("Можно загружать только изображения."));
+    cb(new Error("РњРѕР¶РЅРѕ Р·Р°РіСЂСѓР¶Р°С‚СЊ С‚РѕР»СЊРєРѕ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ."));
   }
 });
 
@@ -65,7 +65,7 @@ function setFlash(req, type, message) {
 
 function isAuthenticated(req, res, next) {
   if (!req.session.user) {
-    setFlash(req, "error", "Требуется вход в систему.");
+    setFlash(req, "error", "РўСЂРµР±СѓРµС‚СЃСЏ РІС…РѕРґ РІ СЃРёСЃС‚РµРјСѓ.");
     return res.redirect("/login");
   }
   next();
@@ -73,7 +73,7 @@ function isAuthenticated(req, res, next) {
 
 function isAdmin(req, res, next) {
   if (!req.session.user || !req.session.user.is_admin) {
-    setFlash(req, "error", "Доступ только для администратора.");
+    setFlash(req, "error", "Р”РѕСЃС‚СѓРї С‚РѕР»СЊРєРѕ РґР»СЏ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°.");
     return res.redirect("/");
   }
   next();
@@ -133,13 +133,13 @@ app.post("/register", async (req, res) => {
   const email = rawEmail.trim().toLowerCase();
 
   if (!username || !email || !password || password.length < 6) {
-    setFlash(req, "error", "Проверьте поля: пароль минимум 6 символов.");
+    setFlash(req, "error", "РџСЂРѕРІРµСЂСЊС‚Рµ РїРѕР»СЏ: РїР°СЂРѕР»СЊ РјРёРЅРёРјСѓРј 6 СЃРёРјРІРѕР»РѕРІ.");
     return res.redirect("/register");
   }
 
   const existingUser = await get("SELECT id FROM users WHERE email = ? OR username = ?", [email, username]);
   if (existingUser) {
-    setFlash(req, "error", "Пользователь с таким email или username уже существует.");
+    setFlash(req, "error", "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃ С‚Р°РєРёРј email РёР»Рё username СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.");
     return res.redirect("/register");
   }
 
@@ -159,7 +159,7 @@ app.post("/register", async (req, res) => {
     is_admin: makeAdmin
   };
 
-  setFlash(req, "success", makeAdmin ? "Аккаунт создан. Вы назначены администратором." : "Аккаунт создан.");
+  setFlash(req, "success", makeAdmin ? "РђРєРєР°СѓРЅС‚ СЃРѕР·РґР°РЅ. Р’С‹ РЅР°Р·РЅР°С‡РµРЅС‹ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРј." : "РђРєРєР°СѓРЅС‚ СЃРѕР·РґР°РЅ.");
   req.session.save(() => res.redirect("/"));
 });
 
@@ -171,24 +171,24 @@ app.post("/login", async (req, res) => {
   const email = String(req.body.email || "").trim().toLowerCase();
   const password = String(req.body.password || "");
   if (!email || !password) {
-    setFlash(req, "error", "Введите email и пароль.");
+    setFlash(req, "error", "Р’РІРµРґРёС‚Рµ email Рё РїР°СЂРѕР»СЊ.");
     return res.redirect("/login");
   }
 
   const user = await get("SELECT * FROM users WHERE email = ?", [email]);
   if (!user) {
-    setFlash(req, "error", "Неверный email или пароль.");
+    setFlash(req, "error", "РќРµРІРµСЂРЅС‹Р№ email РёР»Рё РїР°СЂРѕР»СЊ.");
     return res.redirect("/login");
   }
 
   if (user.is_banned) {
-    setFlash(req, "error", "Ваш аккаунт заблокирован администратором.");
+    setFlash(req, "error", "Р’Р°С€ Р°РєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРј.");
     return res.redirect("/login");
   }
 
   const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) {
-    setFlash(req, "error", "Неверный email или пароль.");
+    setFlash(req, "error", "РќРµРІРµСЂРЅС‹Р№ email РёР»Рё РїР°СЂРѕР»СЊ.");
     return res.redirect("/login");
   }
 
@@ -198,7 +198,7 @@ app.post("/login", async (req, res) => {
     email: user.email,
     is_admin: !!user.is_admin
   };
-  setFlash(req, "success", "Вы вошли в систему.");
+  setFlash(req, "success", "Р’С‹ РІРѕС€Р»Рё РІ СЃРёСЃС‚РµРјСѓ.");
   req.session.save(() => res.redirect("/"));
 });
 
@@ -246,7 +246,7 @@ app.get("/me/edit", isAuthenticated, async (req, res) => {
 app.post("/me/edit", isAuthenticated, async (req, res) => {
   const bio = (req.body.bio || "").trim().slice(0, 500);
   await run("UPDATE users SET bio = ? WHERE id = ?", [bio, req.session.user.id]);
-  setFlash(req, "success", "Профиль обновлен.");
+  setFlash(req, "success", "РџСЂРѕС„РёР»СЊ РѕР±РЅРѕРІР»РµРЅ.");
   res.redirect(`/profile/${req.session.user.id}`);
 });
 
@@ -261,19 +261,19 @@ app.post("/polls", isAuthenticated, upload.single("image"), async (req, res) => 
   options = options.map((item) => item.trim()).filter(Boolean);
 
   if (!title || !description || !category_id || !end_at || options.length < 2) {
-    setFlash(req, "error", "Заполните поля и добавьте минимум 2 варианта ответа.");
+    setFlash(req, "error", "Р—Р°РїРѕР»РЅРёС‚Рµ РїРѕР»СЏ Рё РґРѕР±Р°РІСЊС‚Рµ РјРёРЅРёРјСѓРј 2 РІР°СЂРёР°РЅС‚Р° РѕС‚РІРµС‚Р°.");
     return res.redirect("/polls/new");
   }
 
   const endDate = new Date(end_at);
   if (Number.isNaN(endDate.getTime()) || endDate <= new Date()) {
-    setFlash(req, "error", "Дата окончания должна быть в будущем.");
+    setFlash(req, "error", "Р”Р°С‚Р° РѕРєРѕРЅС‡Р°РЅРёСЏ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РІ Р±СѓРґСѓС‰РµРј.");
     return res.redirect("/polls/new");
   }
 
   const category = await get("SELECT id FROM categories WHERE id = ?", [category_id]);
   if (!category) {
-    setFlash(req, "error", "Категория не найдена.");
+    setFlash(req, "error", "РљР°С‚РµРіРѕСЂРёСЏ РЅРµ РЅР°Р№РґРµРЅР°.");
     return res.redirect("/polls/new");
   }
 
@@ -298,7 +298,7 @@ app.post("/polls", isAuthenticated, upload.single("image"), async (req, res) => 
     await run("INSERT INTO poll_options (poll_id, option_text) VALUES (?, ?)", [pollId, optionText]);
   }
 
-  setFlash(req, "success", "Голосование опубликовано.");
+  setFlash(req, "success", "Р“РѕР»РѕСЃРѕРІР°РЅРёРµ РѕРїСѓР±Р»РёРєРѕРІР°РЅРѕ.");
   res.redirect(`/polls/${pollId}`);
 });
 
@@ -378,32 +378,32 @@ app.post("/polls/:id/vote", isAuthenticated, async (req, res) => {
 
   const user = await get("SELECT is_banned FROM users WHERE id = ?", [userId]);
   if (!user || user.is_banned) {
-    setFlash(req, "error", "Ваш аккаунт заблокирован.");
+    setFlash(req, "error", "Р’Р°С€ Р°РєРєР°СѓРЅС‚ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ.");
     return res.redirect(`/polls/${pollId}`);
   }
 
   const poll = await get("SELECT * FROM polls WHERE id = ?", [pollId]);
   if (!poll) {
-    setFlash(req, "error", "Голосование не найдено.");
+    setFlash(req, "error", "Р“РѕР»РѕСЃРѕРІР°РЅРёРµ РЅРµ РЅР°Р№РґРµРЅРѕ.");
     return res.redirect("/");
   }
 
   if (new Date(poll.end_at) <= new Date()) {
-    setFlash(req, "error", "Время голосования истекло.");
+    setFlash(req, "error", "Р’СЂРµРјСЏ РіРѕР»РѕСЃРѕРІР°РЅРёСЏ РёСЃС‚РµРєР»Рѕ.");
     return res.redirect(`/polls/${pollId}`);
   }
 
   const option = await get("SELECT id FROM poll_options WHERE id = ? AND poll_id = ?", [optionId, pollId]);
   if (!option) {
-    setFlash(req, "error", "Некорректный вариант ответа.");
+    setFlash(req, "error", "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РІР°СЂРёР°РЅС‚ РѕС‚РІРµС‚Р°.");
     return res.redirect(`/polls/${pollId}`);
   }
 
   try {
     await run("INSERT INTO votes (poll_id, option_id, user_id) VALUES (?, ?, ?)", [pollId, optionId, userId]);
-    setFlash(req, "success", "Ваш голос учтен.");
+    setFlash(req, "success", "Р’Р°С€ РіРѕР»РѕСЃ СѓС‡С‚РµРЅ.");
   } catch (_err) {
-    setFlash(req, "error", "Повторное голосование запрещено.");
+    setFlash(req, "error", "РџРѕРІС‚РѕСЂРЅРѕРµ РіРѕР»РѕСЃРѕРІР°РЅРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ.");
   }
 
   res.redirect(`/polls/${pollId}`);
@@ -413,19 +413,19 @@ app.post("/polls/:id/comments", isAuthenticated, async (req, res) => {
   const pollId = Number(req.params.id);
   const body = (req.body.body || "").trim();
   if (!body) {
-    setFlash(req, "error", "Комментарий не может быть пустым.");
+    setFlash(req, "error", "РљРѕРјРјРµРЅС‚Р°СЂРёР№ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј.");
     return res.redirect(`/polls/${pollId}`);
   }
 
   await run("INSERT INTO comments (poll_id, user_id, body) VALUES (?, ?, ?)", [pollId, req.session.user.id, body]);
-  setFlash(req, "success", "Комментарий добавлен.");
+  setFlash(req, "success", "РљРѕРјРјРµРЅС‚Р°СЂРёР№ РґРѕР±Р°РІР»РµРЅ.");
   res.redirect(`/polls/${pollId}`);
 });
 
 app.post("/reports", isAuthenticated, async (req, res) => {
   const { poll_id, comment_id, reason } = req.body;
   if (!reason || (!poll_id && !comment_id)) {
-    setFlash(req, "error", "Некорректная жалоба.");
+    setFlash(req, "error", "РќРµРєРѕСЂСЂРµРєС‚РЅР°СЏ Р¶Р°Р»РѕР±Р°.");
     return res.redirect("/");
   }
 
@@ -433,7 +433,7 @@ app.post("/reports", isAuthenticated, async (req, res) => {
     "INSERT INTO reports (reporter_id, poll_id, comment_id, reason) VALUES (?, ?, ?, ?)",
     [req.session.user.id, poll_id || null, comment_id || null, reason.trim().slice(0, 300)]
   );
-  setFlash(req, "success", "Жалоба отправлена.");
+  setFlash(req, "success", "Р–Р°Р»РѕР±Р° РѕС‚РїСЂР°РІР»РµРЅР°.");
   res.redirect(req.get("Referrer") || "/");
 });
 
@@ -470,33 +470,33 @@ app.get("/admin", isAdmin, async (_req, res) => {
 app.post("/admin/users/:id/toggle-ban", isAdmin, async (req, res) => {
   const user = await get("SELECT is_banned, is_admin FROM users WHERE id = ?", [req.params.id]);
   if (!user) {
-    setFlash(req, "error", "Пользователь не найден.");
+    setFlash(req, "error", "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ.");
     return res.redirect("/admin");
   }
   if (user.is_admin) {
-    setFlash(req, "error", "Нельзя блокировать администратора.");
+    setFlash(req, "error", "РќРµР»СЊР·СЏ Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°.");
     return res.redirect("/admin");
   }
   await run("UPDATE users SET is_banned = ? WHERE id = ?", [user.is_banned ? 0 : 1, req.params.id]);
-  setFlash(req, "success", user.is_banned ? "Пользователь разбанен." : "Пользователь забанен.");
+  setFlash(req, "success", user.is_banned ? "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЂР°Р·Р±Р°РЅРµРЅ." : "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·Р°Р±Р°РЅРµРЅ.");
   res.redirect("/admin");
 });
 
 app.post("/admin/polls/:id/delete", isAdmin, async (req, res) => {
   await run("DELETE FROM polls WHERE id = ?", [req.params.id]);
-  setFlash(req, "success", "Пост удален.");
+  setFlash(req, "success", "РџРѕСЃС‚ СѓРґР°Р»РµРЅ.");
   res.redirect("/admin");
 });
 
 app.post("/admin/comments/:id/delete", isAdmin, async (req, res) => {
   await run("DELETE FROM comments WHERE id = ?", [req.params.id]);
-  setFlash(req, "success", "Комментарий удален.");
+  setFlash(req, "success", "РљРѕРјРјРµРЅС‚Р°СЂРёР№ СѓРґР°Р»РµРЅ.");
   res.redirect("/admin");
 });
 
 app.post("/admin/reports/:id/resolve", isAdmin, async (req, res) => {
   await run("UPDATE reports SET status = 'resolved' WHERE id = ?", [req.params.id]);
-  setFlash(req, "success", "Жалоба отмечена как обработанная.");
+  setFlash(req, "success", "Р–Р°Р»РѕР±Р° РѕС‚РјРµС‡РµРЅР° РєР°Рє РѕР±СЂР°Р±РѕС‚Р°РЅРЅР°СЏ.");
   res.redirect("/admin");
 });
 
@@ -509,7 +509,7 @@ app.use((_req, res) => {
 });
 
 app.use((err, req, res, _next) => {
-  setFlash(req, "error", err.message || "Ошибка сервера.");
+  setFlash(req, "error", err.message || "РћС€РёР±РєР° СЃРµСЂРІРµСЂР°.");
   res.redirect(req.get("Referrer") || "/");
 });
 
@@ -522,3 +522,4 @@ async function bootstrap() {
 }
 
 bootstrap();
+

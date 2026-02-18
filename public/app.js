@@ -1,4 +1,4 @@
-(function theme() {
+п»ї(function theme() {
   const root = document.documentElement;
   const btn = document.getElementById("theme-toggle");
   const saved = localStorage.getItem("theme");
@@ -17,13 +17,13 @@ document.querySelectorAll("[data-countdown]").forEach((el) => {
   const tick = () => {
     const diff = end - new Date();
     if (diff <= 0) {
-      el.textContent = "Голосование завершено";
+      el.textContent = "Р“РѕР»РѕСЃРѕРІР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРѕ";
       return;
     }
     const h = Math.floor(diff / 1000 / 60 / 60);
     const m = Math.floor((diff / 1000 / 60) % 60);
     const s = Math.floor((diff / 1000) % 60);
-    el.textContent = `${h}ч ${m}м ${s}с`;
+    el.textContent = `${h}С‡ ${m}Рј ${s}СЃ`;
     requestAnimationFrame(() => setTimeout(tick, 1000));
   };
   tick();
@@ -36,7 +36,7 @@ if (addOptionBtn) {
     const input = document.createElement("input");
     input.type = "text";
     input.name = "options";
-    input.placeholder = "Еще вариант ответа";
+    input.placeholder = "Р•С‰Рµ РІР°СЂРёР°РЅС‚ РѕС‚РІРµС‚Р°";
     wrap.appendChild(input);
   });
 }
@@ -67,3 +67,4 @@ if (imageModal && imageModalTarget && imageModalClose) {
     if (e.key === "Escape" && imageModal.classList.contains("is-open")) closeModal();
   });
 }
+

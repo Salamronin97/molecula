@@ -105,6 +105,16 @@ async function initDb() {
   `);
 
   await run(`
+    CREATE TABLE IF NOT EXISTS poll_media (
+      id SERIAL PRIMARY KEY,
+      poll_id INTEGER NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+      media_type TEXT NOT NULL CHECK (media_type IN ('image', 'video')),
+      path TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0
+    )
+  `);
+
+  await run(`
     CREATE TABLE IF NOT EXISTS votes (
       id SERIAL PRIMARY KEY,
       poll_id INTEGER NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
@@ -147,13 +157,14 @@ async function initDb() {
     )
   `);
 
-  await run("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_path TEXT");
-  await run("ALTER TABLE polls ADD COLUMN IF NOT EXISTS video_path TEXT");
+  await run("ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT TRUE");
   await run("ALTER TABLE categories ADD COLUMN IF NOT EXISTS group_name TEXT DEFAULT 'Разное'");
   await run("ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0");
-  await run("ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT TRUE");
+  await run("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_path TEXT");
+  await run("ALTER TABLE polls ADD COLUMN IF NOT EXISTS video_path TEXT");
 
   const defaultCategories = [
+    { group: "Разное", slug: "general", name: "/general/ - разное", order: 0 },
     { group: "Разное", slug: "soc", name: "/soc/ - общение", order: 3 },
     { group: "Политика", slug: "int", name: "/int/ - international", order: 11 },
     { group: "Политика", slug: "po", name: "/po/ - политика", order: 12 },
@@ -265,7 +276,6 @@ async function initDb() {
     "sex",
     "fag"
   ];
-
   await run("UPDATE categories SET is_enabled = FALSE WHERE slug = ANY(?::text[])", [blockedSlugs]);
 }
 

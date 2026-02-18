@@ -19,18 +19,18 @@
     <h1 class="thread-title"><%= poll.title %></h1>
     <p class="thread-text"><%= poll.description %></p>
 
-    <% if (poll.image_path || poll.video_path) { %>
-      <div class="media-open-grid">
-        <% if (poll.image_path) { %>
-          <a href="<%= poll.image_path %>" target="_blank" rel="noopener noreferrer" class="media-open-link">
-            <img src="<%= poll.image_path %>" alt="poll image" class="media-open-image" loading="lazy" />
+    <% if ((poll.images && poll.images.length) || (poll.videos && poll.videos.length)) { %>
+      <div class="thread-media-grid media-grid-open">
+        <% (poll.images || []).forEach((img) => { %>
+          <a href="<%= img.path %>" target="_blank" rel="noopener noreferrer" class="thumb-link">
+            <img src="<%= img.path %>" alt="poll image" class="media-thumb media-open-thumb" loading="lazy" />
           </a>
-        <% } %>
-        <% if (poll.video_path) { %>
+        <% }) %>
+        <% (poll.videos || []).forEach((video) => { %>
           <video controls preload="metadata" class="media-open-video">
-            <source src="<%= poll.video_path %>" />
+            <source src="<%= video.path %>" />
           </video>
-        <% } %>
+        <% }) %>
       </div>
     <% } %>
 
@@ -53,9 +53,7 @@
           <p class="muted">Пока нет голосов.</p>
         <% } %>
         <% voters.forEach((vote) => { %>
-          <div class="vote-person">
-            <a href="/profile/<%= vote.id %>"><%= vote.username %></a> выбрал(а): <strong><%= vote.option_text %></strong>
-          </div>
+          <div class="vote-person"><a href="/profile/<%= vote.id %>"><%= vote.username %></a> выбрал(а): <strong><%= vote.option_text %></strong></div>
         <% }) %>
       </section>
     <% } %>
@@ -82,7 +80,7 @@
 
       <form action="/reports" method="POST" class="report-line">
         <input type="hidden" name="poll_id" value="<%= poll.id %>" />
-        <input type="text" name="reason" placeholder="Причина жалобы на пост" required />
+        <input type="text" name="reason" placeholder="Причина жалобы на опрос" required />
         <button type="submit">Жалоба</button>
       </form>
     <% } %>

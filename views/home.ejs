@@ -1,0 +1,23 @@
+<%- include("partials/header") %>
+
+<section class="landing-shell">
+  <aside class="left-catalog">
+    <% Object.keys(categoryGroups).forEach((groupName) => { %>
+      <div class="catalog-group">
+        <div class="catalog-title"><%= groupName %></div>
+        <div class="catalog-list">
+          <% categoryGroups[groupName].forEach((category) => { %>
+            <a href="/polls?category=<%= category.slug %>" class="catalog-link"><%= category.name %></a>
+          <% }) %>
+        </div>
+      </div>
+    <% }) %>
+  </aside>
+
+  <div class="landing-center">
+    <a href="/polls?category=general" class="landing-logo-link">Molecula</a>
+    <p data-i18n="landing_hint">Нажмите на название, чтобы открыть раздел Разное.</p>
+  </div>
+</section>
+
+<%- include("partials/footer") %>

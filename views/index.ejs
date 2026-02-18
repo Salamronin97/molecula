@@ -7,7 +7,7 @@
         <div class="catalog-title"><%= groupName %></div>
         <div class="catalog-list">
           <% categoryGroups[groupName].forEach((category) => { %>
-            <a href="/?category=<%= category.slug %>" class="catalog-link <%= selectedCategory === category.slug ? 'active' : '' %>"><%= category.name %></a>
+            <a href="/polls?category=<%= category.slug %>" class="catalog-link <%= selectedCategory === category.slug ? 'active' : '' %>"><%= category.name %></a>
           <% }) %>
         </div>
       </div>
@@ -16,13 +16,13 @@
 
   <section class="feed-column">
     <div class="board-tools">
-      <form action="/" method="GET" class="search-box">
+      <form action="/polls" method="GET" class="search-box">
         <% if (selectedCategory) { %>
           <input type="hidden" name="category" value="<%= selectedCategory %>" />
         <% } %>
         <input name="q" value="<%= q || '' %>" type="search" placeholder="Поиск: ID, название, текст описания" />
       </form>
-      <a href="/polls/new" class="create-poll-btn">Создать тред/опрос</a>
+      <a href="/polls/new" class="create-poll-btn">Создать опрос</a>
     </div>
 
     <% if (!polls.length) { %>
@@ -46,22 +46,32 @@
           <% } %>
         </div>
 
-        <h2 class="thread-title">
-          <a href="/polls/<%= poll.id %>"><%= poll.title %></a>
-        </h2>
+        <h2 class="thread-title"><a href="/polls/<%= poll.id %>"><%= poll.title %></a></h2>
         <p class="thread-text"><%= poll.description.length > 260 ? `${poll.description.slice(0, 260)}...` : poll.description %></p>
 
-        <% if (poll.image_path || poll.video_path) { %>
+        <% if ((poll.images && poll.images.length) || (poll.videos && poll.videos.length) || poll.preview_image || poll.preview_video) { %>
           <div class="thread-media-grid">
-            <% if (poll.image_path) { %>
+            <% (poll.images || []).slice(0, 5).forEach((image) => { %>
               <a href="/polls/<%= poll.id %>" class="thumb-link">
-                <img src="<%= poll.image_path %>" alt="preview image" class="media-thumb" loading="lazy" />
+                <img src="<%= image.path %>" alt="preview image" class="media-thumb" loading="lazy" />
               </a>
-            <% } %>
-            <% if (poll.video_path) { %>
+            <% }) %>
+            <% (poll.videos || []).slice(0, 3).forEach((video) => { %>
               <a href="/polls/<%= poll.id %>" class="thumb-link">
                 <video class="media-thumb" preload="metadata" muted>
-                  <source src="<%= poll.video_path %>" />
+                  <source src="<%= video.path %>" />
+                </video>
+              </a>
+            <% }) %>
+            <% if (!poll.images?.length && poll.preview_image) { %>
+              <a href="/polls/<%= poll.id %>" class="thumb-link">
+                <img src="<%= poll.preview_image %>" alt="preview image" class="media-thumb" loading="lazy" />
+              </a>
+            <% } %>
+            <% if (!poll.videos?.length && poll.preview_video) { %>
+              <a href="/polls/<%= poll.id %>" class="thumb-link">
+                <video class="media-thumb" preload="metadata" muted>
+                  <source src="<%= poll.preview_video %>" />
                 </video>
               </a>
             <% } %>

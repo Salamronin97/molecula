@@ -1,7 +1,7 @@
 <%- include("partials/header") %>
 
 <section class="thread-form-page">
-  <div class="thread-form-title">Создать тред / опрос</div>
+  <div class="thread-form-title">Создать опрос</div>
   <form action="/polls" method="POST" enctype="multipart/form-data" class="thread-form-card">
     <div class="form-line">
       <label>Тема</label>
@@ -27,7 +27,7 @@
     </div>
 
     <div class="form-line">
-      <label>Комментарий / описание</label>
+      <label>Описание</label>
       <textarea name="description" rows="7" required maxlength="15000" placeholder="Текст опроса"></textarea>
     </div>
 
@@ -36,13 +36,13 @@
     </div>
 
     <div class="form-line">
-      <label>Фото</label>
-      <input type="file" name="image" accept="image/*" />
+      <label>Фото (можно несколько)</label>
+      <input type="file" name="images" accept="image/*" multiple />
     </div>
 
     <div class="form-line">
-      <label>Видео</label>
-      <input type="file" name="video" accept="video/*" />
+      <label>Видео (можно несколько)</label>
+      <input type="file" name="videos" accept="video/*" multiple />
     </div>
 
     <div id="options-wrap" class="options-wrap">
@@ -58,7 +58,7 @@
 
     <div class="form-actions">
       <button type="button" id="add-option" class="toolbar-btn">Добавить вариант</button>
-      <button type="submit" class="toolbar-btn toolbar-btn-primary">Отправить</button>
+      <button type="submit" class="toolbar-btn toolbar-btn-primary">Опубликовать</button>
     </div>
   </form>
 </section>

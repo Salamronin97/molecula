@@ -12,7 +12,24 @@
   <% if (survey.cover_path) { %>
     <img src="<%= survey.cover_path %>" alt="cover" class="survey-cover survey-cover-lg" />
   <% } %>
+  <% if ((survey.images && survey.images.length) || (survey.videos && survey.videos.length)) { %>
+    <div class="media-grid">
+      <% (survey.images || []).forEach((item) => { %>
+        <a href="<%= item.path %>" target="_blank" rel="noopener noreferrer">
+          <img src="<%= item.path %>" alt="attachment" class="media-thumb" />
+        </a>
+      <% }) %>
+      <% (survey.videos || []).forEach((item) => { %>
+        <video controls preload="metadata" class="media-video">
+          <source src="<%= item.path %>" />
+        </video>
+      <% }) %>
+    </div>
+  <% } %>
   <p class="muted">Всего ответов: <%= responsesCount %></p>
+  <% if (currentUser && (currentUser.id === survey.user_id || currentUser.is_admin)) { %>
+    <a href="/surveys/<%= survey.id %>/results.csv" class="btn ghost">Скачать результаты (CSV)</a>
+  <% } %>
 </article>
 
 <section class="card survey-page">

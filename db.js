@@ -93,6 +93,16 @@ async function initDb() {
   `);
 
   await run(`
+    CREATE TABLE IF NOT EXISTS survey_media (
+      id SERIAL PRIMARY KEY,
+      survey_id INTEGER NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,
+      media_type TEXT NOT NULL CHECK (media_type IN ('image', 'video')),
+      path TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0
+    )
+  `);
+
+  await run(`
     CREATE TABLE IF NOT EXISTS survey_questions (
       id SERIAL PRIMARY KEY,
       survey_id INTEGER NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,

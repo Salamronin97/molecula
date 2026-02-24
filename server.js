@@ -20,10 +20,10 @@ const upload = multer({
     destination: (_req, _file, cb) => cb(null, uploadsDir),
     filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`)
   }),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 30 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) return cb(null, true);
-    cb(new Error("Допускаются только изображения."));
+    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) return cb(null, true);
+    cb(new Error("Допускаются только изображения и видео."));
   }
 });
 
@@ -72,6 +72,14 @@ function isAdmin(req, res, next) {
 function normalizeQuestionType(value) {
   if (value === "single" || value === "multi" || value === "scale" || value === "text") return value;
   return "text";
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  if (text.includes(",") || text.includes("\"") || text.includes("\n")) {
+    return `"${text.replace(/"/g, "\"\"")}"`;
+  }
+  return text;
 }
 
 app.use(async (req, res, next) => {
@@ -201,7 +209,7 @@ app.get("/surveys/new", isAuthenticated, (_req, res) => {
   res.render("surveys/new");
 });
 
-app.post("/surveys", isAuthenticated, upload.single("cover"), async (req, res) => {
+app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
   const title = String(req.body.title || "").trim().slice(0, 160);
   const description = String(req.body.description || "").trim().slice(0, 4000);
   const categoryId = Number(req.body.category_id);
@@ -259,6 +267,16 @@ app.post("/surveys", isAuthenticated, upload.single("cover"), async (req, res) =
     return res.redirect("/surveys/new");
   }
 
+  const allFiles = Array.isArray(req.files) ? req.files : [];
+  const coverFile =
+    allFiles.find((file) => file.fieldname === "cover" && file.mimetype.startsWith("image/")) ||
+    allFiles.find((file) => file.mimetype.startsWith("image/")) ||
+    null;
+
+  const mediaFiles = allFiles
+    .filter((file) => file.fieldname === "media" || file.fieldname === "media[]")
+    .filter((file) => file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/"));
+
   const createdSurvey = await run(
     `
     INSERT INTO surveys (user_id, category_id, title, description, cover_path, end_at, is_anonymous)
@@ -270,13 +288,21 @@ app.post("/surveys", isAuthenticated, upload.single("cover"), async (req, res) =
       categoryId,
       title,
       description,
-      req.file ? `/uploads/${req.file.filename}` : null,
+      coverFile ? `/uploads/${coverFile.filename}` : null,
       endDate.toISOString(),
       isAnonymous
     ]
   );
 
   const surveyId = createdSurvey.rows[0].id;
+
+  for (let i = 0; i < mediaFiles.length; i += 1) {
+    const file = mediaFiles[i];
+    await run(
+      "INSERT INTO survey_media (survey_id, media_type, path, sort_order) VALUES (?, ?, ?, ?)",
+      [surveyId, file.mimetype.startsWith("video/") ? "video" : "image", `/uploads/${file.filename}`, i]
+    );
+  }
 
   for (let i = 0; i < questions.length; i += 1) {
     const q = questions[i];
@@ -317,6 +343,13 @@ app.get("/surveys/:id", async (req, res) => {
     [req.params.id]
   );
   if (!survey) return res.status(404).render("404");
+
+  const media = await all(
+    "SELECT * FROM survey_media WHERE survey_id = ? ORDER BY sort_order, id",
+    [survey.id]
+  );
+  survey.images = media.filter((item) => item.media_type === "image");
+  survey.videos = media.filter((item) => item.media_type === "video");
 
   const questions = await all(
     `
@@ -384,6 +417,72 @@ app.get("/surveys/:id", async (req, res) => {
     questionStats,
     responsesCount: Number(responsesCount.total || 0)
   });
+});
+
+app.get("/surveys/:id/results.csv", isAuthenticated, async (req, res) => {
+  const surveyId = Number(req.params.id);
+  const survey = await get("SELECT id, user_id, title, is_anonymous FROM surveys WHERE id = ?", [surveyId]);
+  if (!survey) return res.status(404).render("404");
+
+  const isOwner = req.session.user.id === Number(survey.user_id);
+  if (!isOwner && !req.session.user.is_admin) {
+    setFlash(req, "error", "Доступ запрещен.");
+    return res.redirect(`/surveys/${surveyId}`);
+  }
+
+  const questions = await all(
+    "SELECT id, question_text, question_type FROM survey_questions WHERE survey_id = ? ORDER BY sort_order, id",
+    [surveyId]
+  );
+  const responses = await all(
+    `
+    SELECT r.id, r.created_at, u.username
+    FROM survey_responses r
+    JOIN users u ON u.id = r.user_id
+    WHERE r.survey_id = ?
+    ORDER BY r.id
+    `,
+    [surveyId]
+  );
+  const answers = await all(
+    `
+    SELECT a.response_id, a.question_id, a.text_value, a.number_value, o.option_text
+    FROM survey_answers a
+    LEFT JOIN survey_question_options o ON o.id = a.option_id
+    WHERE a.response_id = ANY(?::int[])
+    ORDER BY a.response_id, a.question_id, a.id
+    `,
+    [responses.map((r) => r.id).length ? responses.map((r) => r.id) : [0]]
+  );
+
+  const answerMap = new Map();
+  for (const answer of answers) {
+    const key = `${answer.response_id}:${answer.question_id}`;
+    if (!answerMap.has(key)) answerMap.set(key, []);
+    if (answer.option_text) answerMap.get(key).push(answer.option_text);
+    else if (answer.text_value) answerMap.get(key).push(answer.text_value);
+    else if (answer.number_value !== null && answer.number_value !== undefined) answerMap.get(key).push(String(answer.number_value));
+  }
+
+  const header = ["response_id", "respondent", "submitted_at", ...questions.map((q) => q.question_text)];
+  const lines = [header.map(csvEscape).join(",")];
+
+  for (const responseRow of responses) {
+    const row = [
+      responseRow.id,
+      survey.is_anonymous ? "hidden" : responseRow.username,
+      responseRow.created_at
+    ];
+    for (const question of questions) {
+      const key = `${responseRow.id}:${question.id}`;
+      row.push((answerMap.get(key) || []).join(" | "));
+    }
+    lines.push(row.map(csvEscape).join(","));
+  }
+
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename=\"survey-${surveyId}-results.csv\"`);
+  res.send(lines.join("\n"));
 });
 
 app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
@@ -514,6 +613,21 @@ app.post("/reports", isAuthenticated, async (req, res) => {
 });
 
 app.get("/me", isAuthenticated, (req, res) => res.redirect(`/profile/${req.session.user.id}`));
+app.get("/me/responses", isAuthenticated, async (req, res) => {
+  const responses = await all(
+    `
+    SELECT r.created_at, s.id AS survey_id, s.title, c.name AS category_name
+    FROM survey_responses r
+    JOIN surveys s ON s.id = r.survey_id
+    JOIN categories c ON c.id = s.category_id
+    WHERE r.user_id = ?
+    ORDER BY r.created_at DESC
+    `,
+    [req.session.user.id]
+  );
+  res.render("responses", { responses });
+});
+
 app.get("/me/edit", isAuthenticated, async (req, res) => {
   const user = await get("SELECT id, username, email, bio, avatar_path FROM users WHERE id = ?", [req.session.user.id]);
   res.render("edit-profile", { user });

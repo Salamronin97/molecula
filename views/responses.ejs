@@ -1,0 +1,16 @@
+<%- include("partials/header") %>
+
+<section class="card">
+  <h1>Мои ответы</h1>
+  <% if (!responses.length) { %>
+    <p>Вы пока не проходили анкеты.</p>
+  <% } %>
+  <% responses.forEach((row) => { %>
+    <article class="survey-item">
+      <h3><a href="/surveys/<%= row.survey_id %>"><%= row.title %></a></h3>
+      <p class="muted">Категория: <%= row.category_name %> · Отправлено: <%= row.created_at %></p>
+    </article>
+  <% }) %>
+</section>
+
+<%- include("partials/footer") %>

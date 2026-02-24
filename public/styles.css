@@ -221,6 +221,29 @@ select {
   max-height: 360px;
 }
 
+.media-grid {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.media-thumb {
+  width: 180px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+.media-video {
+  width: 280px;
+  max-height: 180px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #111;
+}
+
 .survey-page {
   max-width: 860px;
   margin-left: auto;

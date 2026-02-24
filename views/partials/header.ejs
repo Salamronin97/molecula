@@ -3,60 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Molecula</title>
+  <title>Портал анкетирования</title>
   <link rel="stylesheet" href="/styles.css" />
-  <script>
-    (function applyUiState() {
-      const theme = localStorage.getItem("theme") || "light";
-      const lang = localStorage.getItem("lang") || "ru";
-      document.documentElement.setAttribute("data-theme", theme);
-      document.documentElement.setAttribute("lang", lang);
-    })();
-  </script>
 </head>
 <body>
-  <header class="board-header">
-    <div class="board-header-top">
-      <a href="/" data-i18n="home">Главная</a>
-      <a href="/requisites" data-i18n="requisites">Реквизиты</a>
-      <span class="header-right-state">Molecula online</span>
-    </div>
-    <div class="board-header-main">
-      <a class="board-logo" href="/polls?category=general">Molecula</a>
-      <div class="header-center-nav">
-        <a href="/polls?category=general" data-i18n="polls">Опросы</a>
-        <a href="/polls/new" class="thread-create-link" data-i18n="create_poll">Создать опрос</a>
-      </div>
-      <div class="header-controls">
-        <button type="button" id="theme-toggle" class="tiny-btn" data-i18n="theme">Тема</button>
-        <button type="button" id="lang-toggle" class="tiny-btn">RU</button>
-      </div>
+  <header class="gov-header">
+    <div class="container gov-header-inner">
+      <a href="/" class="gov-brand">Портал анкетирования</a>
+      <nav class="gov-nav">
+        <a href="/surveys">Анкеты</a>
+        <% if (currentUser) { %>
+          <a href="/surveys/new">Создать анкету</a>
+          <a href="/me">Личный кабинет</a>
+          <% if (currentUser.is_admin) { %>
+            <a href="/admin">Админ-панель</a>
+          <% } %>
+          <form action="/logout" method="POST">
+            <button type="submit">Выйти</button>
+          </form>
+        <% } else { %>
+          <a href="/login">Вход</a>
+          <a href="/register">Регистрация</a>
+        <% } %>
+      </nav>
     </div>
   </header>
-
-  <div class="quick-dock">
-    <a class="dock-item" href="/requisites" title="Реквизиты">₽</a>
-    <% if (currentUser && currentUser.is_admin) { %>
-      <a class="dock-item" href="/admin" title="Админ">A</a>
-    <% } %>
-  </div>
-
-  <main class="page-wrap">
-    <section class="user-toolbar">
-      <% if (currentUser) { %>
-        <a href="/me" class="toolbar-btn" data-i18n="profile">Кабинет</a>
-        <% if (currentUser.is_admin) { %>
-          <a href="/admin" class="toolbar-btn" data-i18n="admin">Админ</a>
-        <% } %>
-        <form action="/logout" method="POST">
-          <button type="submit" class="toolbar-btn toolbar-btn-primary" data-i18n="logout">Выйти</button>
-        </form>
-      <% } else { %>
-        <a href="/login" class="toolbar-btn" data-i18n="login">Вход</a>
-        <a href="/register" class="toolbar-btn toolbar-btn-primary" data-i18n="register">Регистрация</a>
-      <% } %>
-    </section>
-
+  <main class="container">
     <% if (flash) { %>
       <div class="flash <%= flash.type %>"><%= flash.message %></div>
     <% } %>

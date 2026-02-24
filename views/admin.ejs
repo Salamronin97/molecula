@@ -1,41 +1,41 @@
 <%- include("partials/header") %>
 
-<section class="thread-card thread-card-wide">
-  <h1>Админ меню</h1>
-  <p class="muted">Управление пользователями, постами, комментариями и жалобами.</p>
+<section class="card">
+  <h1>Админ-панель</h1>
+  <p class="muted">Управление пользователями, анкетами, комментариями и жалобами.</p>
 </section>
 
-<section class="thread-card thread-card-wide">
+<section class="card">
   <h2>Пользователи</h2>
   <% users.forEach((user) => { %>
-    <div class="comment-item">
-      <strong><%= user.username %></strong> · <span class="muted"><%= user.email %></span> · <span class="muted"><%= user.is_banned ? "Забанен" : "Активен" %></span>
+    <div class="admin-row">
+      <span><strong><%= user.username %></strong> · <%= user.email %> · <%= user.is_banned ? "Заблокирован" : "Активен" %></span>
       <% if (!user.is_admin) { %>
         <form action="/admin/users/<%= user.id %>/toggle-ban" method="POST">
-          <button type="submit"><%= user.is_banned ? "Разбанить" : "Бан" %></button>
+          <button type="submit"><%= user.is_banned ? "Разблокировать" : "Заблокировать" %></button>
         </form>
       <% } %>
     </div>
   <% }) %>
 </section>
 
-<section class="thread-card thread-card-wide">
-  <h2>Посты</h2>
-  <% polls.forEach((poll) => { %>
-    <div class="comment-item">
-      <a href="/polls/<%= poll.id %>"><%= poll.title %></a> · <span class="muted"><%= poll.username %></span>
-      <form action="/admin/polls/<%= poll.id %>/delete" method="POST">
+<section class="card">
+  <h2>Анкеты</h2>
+  <% surveys.forEach((survey) => { %>
+    <div class="admin-row">
+      <a href="/surveys/<%= survey.id %>"><%= survey.title %></a>
+      <form action="/admin/surveys/<%= survey.id %>/delete" method="POST" onsubmit="return confirm('Удалить анкету?')">
         <button type="submit">Удалить</button>
       </form>
     </div>
   <% }) %>
 </section>
 
-<section class="thread-card thread-card-wide">
+<section class="card">
   <h2>Комментарии</h2>
   <% comments.forEach((comment) => { %>
-    <div class="comment-item">
-      <span><%= comment.body %></span> · <span class="muted"><%= comment.username %></span>
+    <div class="admin-row">
+      <span><%= comment.username %>: <%= comment.body %></span>
       <form action="/admin/comments/<%= comment.id %>/delete" method="POST">
         <button type="submit">Удалить</button>
       </form>
@@ -43,14 +43,13 @@
   <% }) %>
 </section>
 
-<section class="thread-card thread-card-wide">
+<section class="card">
   <h2>Жалобы</h2>
   <% reports.forEach((report) => { %>
-    <div class="comment-item">
-      <div><strong>#<%= report.id %></strong> · <span class="muted"><%= report.reporter_name %> · <%= report.status %></span></div>
-      <div class="muted">Причина: <%= report.reason %></div>
+    <div class="admin-row">
+      <span>#<%= report.id %> · <%= report.reporter_name %> · <%= report.status %> · <%= report.reason %></span>
       <form action="/admin/reports/<%= report.id %>/resolve" method="POST">
-        <button type="submit">Отметить обработанной</button>
+        <button type="submit">Обработано</button>
       </form>
     </div>
   <% }) %>

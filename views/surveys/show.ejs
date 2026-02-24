@@ -1,0 +1,106 @@
+<%- include("../partials/header") %>
+
+<article class="survey-item survey-page">
+  <div class="survey-meta">
+    <span class="badge"><%= survey.category_name %></span>
+    <span>Автор: <a href="/profile/<%= survey.user_id %>"><%= survey.username %></a></span>
+    <span class="timer" data-countdown="<%= survey.end_at %>"></span>
+    <span><%= survey.is_anonymous ? "Анонимная" : "Публичная" %></span>
+  </div>
+  <h1><%= survey.title %></h1>
+  <p><%= survey.description %></p>
+  <% if (survey.cover_path) { %>
+    <img src="<%= survey.cover_path %>" alt="cover" class="survey-cover survey-cover-lg" />
+  <% } %>
+  <p class="muted">Всего ответов: <%= responsesCount %></p>
+</article>
+
+<section class="card survey-page">
+  <h2>Пройти анкету</h2>
+  <% if (!currentUser) { %>
+    <p>Чтобы отправить ответы, выполните вход.</p>
+  <% } else if (hasResponded) { %>
+    <p>Вы уже отправляли ответы в этой анкете.</p>
+  <% } else if (new Date(survey.end_at) <= now) { %>
+    <p>Анкетирование завершено.</p>
+  <% } else { %>
+    <form action="/surveys/<%= survey.id %>/respond" method="POST">
+      <% questions.forEach((question, index) => { %>
+        <div class="question-view">
+          <h3><%= index + 1 %>. <%= question.question_text %> <%= question.is_required ? "*" : "" %></h3>
+          <% if (question.question_type === "text") { %>
+            <textarea name="q_<%= question.id %>" rows="3" <%= question.is_required ? "required" : "" %>></textarea>
+          <% } %>
+          <% if (question.question_type === "scale") { %>
+            <select name="q_<%= question.id %>" <%= question.is_required ? "required" : "" %>>
+              <option value="">Выберите оценку</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          <% } %>
+          <% if (question.question_type === "single") { %>
+            <% question.options.forEach((option) => { %>
+              <label class="option-line">
+                <input type="radio" name="q_<%= question.id %>" value="<%= option.id %>" <%= question.is_required ? "required" : "" %> />
+                <span><%= option.option_text %></span>
+              </label>
+            <% }) %>
+          <% } %>
+          <% if (question.question_type === "multi") { %>
+            <% question.options.forEach((option) => { %>
+              <label class="option-line">
+                <input type="checkbox" name="q_<%= question.id %>" value="<%= option.id %>" />
+                <span><%= option.option_text %></span>
+              </label>
+            <% }) %>
+          <% } %>
+        </div>
+      <% }) %>
+      <button type="submit" class="btn">Отправить ответы</button>
+    </form>
+  <% } %>
+</section>
+
+<section class="card survey-page">
+  <h2>Результаты голосования</h2>
+  <% questions.forEach((question) => { %>
+    <% if (question.question_type === "single" || question.question_type === "multi") { %>
+      <div class="question-view">
+        <h3><%= question.question_text %></h3>
+        <% (questionStats[question.id] || []).forEach((row) => { %>
+          <div class="result-row">
+            <span><%= row.option_text %> — <%= row.vote_count %></span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  <% }) %>
+</section>
+
+<section class="card survey-page">
+  <h2>Комментарии</h2>
+  <% if (currentUser) { %>
+    <form action="/surveys/<%= survey.id %>/comments" method="POST">
+      <textarea name="body" rows="3" required placeholder="Напишите комментарий"></textarea>
+      <button type="submit" class="btn">Отправить</button>
+    </form>
+  <% } %>
+  <% comments.forEach((comment) => { %>
+    <div class="comment">
+      <div class="muted"><a href="/profile/<%= comment.user_id %>"><%= comment.username %></a> · <%= comment.created_at %></div>
+      <p><%= comment.body %></p>
+      <% if (currentUser) { %>
+        <form action="/reports" method="POST" class="report-inline">
+          <input type="hidden" name="comment_id" value="<%= comment.id %>" />
+          <input type="text" name="reason" required placeholder="Причина жалобы" />
+          <button type="submit">Жалоба</button>
+        </form>
+      <% } %>
+    </div>
+  <% }) %>
+</section>
+
+<%- include("../partials/footer") %>

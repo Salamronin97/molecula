@@ -1,57 +1,26 @@
 <%- include("partials/header") %>
 
-<section class="profile-layout">
-  <article class="profile-main-card">
-    <div class="profile-top">
-      <div class="profile-avatar-wrap">
-        <% if (profileUser.avatar_path) { %>
-          <img src="<%= profileUser.avatar_path %>" alt="avatar" class="profile-avatar" />
-        <% } else { %>
-          <div class="profile-avatar profile-avatar-fallback"><%= profileUser.username.slice(0, 1).toUpperCase() %></div>
-        <% } %>
-      </div>
-      <div>
-        <h1><%= profileUser.username %></h1>
-        <div class="muted">ID: <%= profileUser.id %> · Регистрация: <%= profileUser.created_at %> <%= profileUser.is_admin ? "· Админ" : "" %></div>
-      </div>
-    </div>
-
-    <p class="profile-bio"><%= profileUser.bio || "Пока без описания" %></p>
-
-    <% if (currentUser && currentUser.id === profileUser.id) { %>
-      <a class="toolbar-btn" href="/me/edit">Редактировать профиль</a>
-    <% } %>
-  </article>
-
-  <article class="profile-favs-card">
-    <div class="fav-head">Избранное / Популярное</div>
-    <div class="fav-list">
-      <% if (!favorites.length) { %>
-        <div class="muted">Пока пусто.</div>
-      <% } %>
-      <% favorites.forEach((item) => { %>
-        <a href="/polls/<%= item.id %>" class="fav-link"><%= item.category_name %> · <%= item.title %></a>
-      <% }) %>
-    </div>
-    <div class="fav-footer">
-      <span>Избранное</span>
-      <span>Популярное</span>
-    </div>
-  </article>
+<section class="card profile-card">
+  <% if (profileUser.avatar_path) { %>
+    <img src="<%= profileUser.avatar_path %>" alt="avatar" class="profile-avatar" />
+  <% } %>
+  <h1><%= profileUser.username %></h1>
+  <p class="muted">ID: <%= profileUser.id %> · Зарегистрирован: <%= profileUser.created_at %> <%= profileUser.is_admin ? "· Администратор" : "" %></p>
+  <p><%= profileUser.bio || "Описание пока не заполнено." %></p>
+  <% if (currentUser && currentUser.id === profileUser.id) { %>
+    <a href="/me/edit" class="btn ghost">Редактировать профиль</a>
+  <% } %>
 </section>
 
-<section class="profile-polls">
-  <h2>Опросы пользователя</h2>
-  <% if (!polls.length) { %>
-    <article class="thread-card">Опросов пока нет.</article>
+<section class="card">
+  <h2>Анкеты пользователя</h2>
+  <% if (!surveys.length) { %>
+    <p>Пока нет опубликованных анкет.</p>
   <% } %>
-  <% polls.forEach((poll) => { %>
-    <article class="thread-card">
-      <h3 class="thread-title"><a href="/polls/<%= poll.id %>"><%= poll.title %></a></h3>
-      <div class="thread-foot">
-        <span>Голосов: <%= poll.vote_count %></span>
-        <span class="timer" data-countdown="<%= poll.end_at %>"></span>
-      </div>
+  <% surveys.forEach((survey) => { %>
+    <article class="survey-item">
+      <h3><a href="/surveys/<%= survey.id %>"><%= survey.title %></a></h3>
+      <p class="muted">Ответов: <%= survey.responses_count %> · <span class="timer" data-countdown="<%= survey.end_at %>"></span></p>
     </article>
   <% }) %>
 </section>

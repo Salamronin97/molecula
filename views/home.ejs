@@ -1,53 +1,27 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Molecula</title>
-  <link rel="stylesheet" href="/styles.css" />
-  <script>
-    (function applyUiState() {
-      const theme = localStorage.getItem("theme") || "light";
-      const lang = localStorage.getItem("lang") || "ru";
-      document.documentElement.setAttribute("data-theme", theme);
-      document.documentElement.setAttribute("lang", lang);
-    })();
-  </script>
-</head>
-<body>
-  <main class="home-main">
-    <div class="home-head">
-      <a href="/polls?category=general" class="home-logo-link">
-        <span class="home-logo-bolt">⚡</span>
-        <span>Molecula</span>
-      </a>
-      <p class="home-sub">Добро пожаловать.</p>
-    </div>
+<%- include("partials/header") %>
 
-    <section class="home-intro">
-      <p><strong>Molecula</strong> - это платформа опросов и голосований. Выберите раздел, откройте ленту и голосуйте.</p>
-      <p>Нажмите на логотип выше, чтобы перейти в главный раздел <strong>Разное</strong>.</p>
-    </section>
+<section class="hero">
+  <h1>Интерактивный веб-сайт для анкетирования и голосования</h1>
+  <p>Создавайте анкеты, проводите голосования, анализируйте результаты и управляйте обратной связью пользователей.</p>
+  <div class="hero-actions">
+    <a class="btn" href="/surveys">Перейти к анкетам</a>
+    <a class="btn ghost" href="/surveys/new">Создать анкету</a>
+  </div>
+</section>
 
-    <div class="home-actions">
-      <a href="/polls?category=general">Перейти в опросы</a>
-      <a href="/polls/new">Создать опрос</a>
-    </div>
+<section class="cards">
+  <article class="card">
+    <h3>Анкетирование</h3>
+    <p>Поддерживаются разные типы вопросов: текст, одиночный выбор, множественный выбор и шкала.</p>
+  </article>
+  <article class="card">
+    <h3>Голосование</h3>
+    <p>Выбор вариантов с автоматическим подсчетом результатов и защитой от повторной отправки.</p>
+  </article>
+  <article class="card">
+    <h3>Модерация</h3>
+    <p>Администратор управляет жалобами, блокирует пользователей и удаляет нежелательный контент.</p>
+  </article>
+</section>
 
-    <section class="home-catalog-grid">
-      <% Object.keys(categoryGroups).forEach((groupName) => { %>
-        <div class="home-group">
-          <h3><%= groupName %></h3>
-          <div class="home-links">
-            <% categoryGroups[groupName].forEach((category) => { %>
-              <a href="/polls?category=<%= category.slug %>"><%= category.name %></a>
-            <% }) %>
-          </div>
-        </div>
-      <% }) %>
-    </section>
-  </main>
-
-  <script src="/app.js"></script>
-</body>
-</html>
+<%- include("partials/footer") %>

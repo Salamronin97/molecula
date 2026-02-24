@@ -15,17 +15,15 @@ app.set("trust proxy", true);
 const uploadsDir = path.join(__dirname, "public", "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`)
-});
-
 const upload = multer({
-  storage,
-  limits: { fileSize: 30 * 1024 * 1024 },
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`)
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) return cb(null, true);
-    return cb(new Error("Допустимы только изображения и видео."));
+    if (file.mimetype.startsWith("image/")) return cb(null, true);
+    cb(new Error("Допускаются только изображения."));
   }
 });
 
@@ -57,7 +55,7 @@ function setFlash(req, type, message) {
 
 function isAuthenticated(req, res, next) {
   if (!req.session.user) {
-    setFlash(req, "error", "Нужен вход в аккаунт.");
+    setFlash(req, "error", "Требуется вход в систему.");
     return res.redirect("/login");
   }
   return next();
@@ -71,28 +69,9 @@ function isAdmin(req, res, next) {
   return next();
 }
 
-async function attachMedia(polls) {
-  if (!polls.length) return polls;
-  const ids = polls.map((p) => Number(p.id));
-  const rows = await all("SELECT * FROM poll_media WHERE poll_id = ANY(?::int[]) ORDER BY poll_id, sort_order, id", [ids]);
-  const map = new Map();
-  for (const row of rows) {
-    if (!map.has(row.poll_id)) map.set(row.poll_id, []);
-    map.get(row.poll_id).push(row);
-  }
-  return polls.map((poll) => {
-    const media = map.get(Number(poll.id)) || [];
-    const images = media.filter((m) => m.media_type === "image");
-    const videos = media.filter((m) => m.media_type === "video");
-    return {
-      ...poll,
-      media,
-      images,
-      videos,
-      preview_image: images[0]?.path || poll.image_path || null,
-      preview_video: videos[0]?.path || poll.video_path || null
-    };
-  });
+function normalizeQuestionType(value) {
+  if (value === "single" || value === "multi" || value === "scale" || value === "text") return value;
+  return "text";
 }
 
 app.use(async (req, res, next) => {
@@ -102,95 +81,50 @@ app.use(async (req, res, next) => {
   req.session.flash = null;
 
   try {
-    const categories = await all("SELECT * FROM categories WHERE is_enabled = TRUE ORDER BY sort_order, name");
-    const grouped = {};
-    for (const category of categories) {
-      const key = category.group_name || "Разное";
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(category);
-    }
-    res.locals.categories = categories;
-    res.locals.categoryGroups = grouped;
+    res.locals.categories = await all("SELECT * FROM categories ORDER BY name");
   } catch (_err) {
     res.locals.categories = [];
-    res.locals.categoryGroups = {};
   }
-
   next();
 });
 
-app.get("/", (_req, res) => {
-  res.render("home");
+app.get("/", (_req, res) => res.render("home"));
+
+app.get("/polls", (req, res) => {
+  const query = req.originalUrl.includes("?") ? req.originalUrl.slice(req.originalUrl.indexOf("?")) : "";
+  res.redirect(`/surveys${query}`);
 });
-
-app.get("/polls", async (req, res) => {
-  const categorySlug = String(req.query.category || "").trim();
-  const q = String(req.query.q || "").trim().slice(0, 80);
-  const where = ["c.is_enabled = TRUE"];
-  const params = [];
-
-  if (categorySlug) {
-    where.push("c.slug = ?");
-    params.push(categorySlug);
-  }
-
-  if (q) {
-    where.push("(LOWER(p.title) LIKE LOWER(?) OR LOWER(p.description) LIKE LOWER(?) OR CAST(p.id AS TEXT) = ?)");
-    params.push(`%${q}%`, `%${q}%`, q);
-  }
-
-  const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
-  const pollsRaw = await all(
-    `
-    SELECT p.*, u.username, u.avatar_path, c.name AS category_name, c.slug AS category_slug,
-      (SELECT COUNT(*) FROM votes v WHERE v.poll_id = p.id) AS vote_count,
-      (SELECT COUNT(*) FROM comments cm WHERE cm.poll_id = p.id) AS comment_count
-    FROM polls p
-    JOIN users u ON p.user_id = u.id
-    JOIN categories c ON p.category_id = c.id
-    ${whereClause}
-    ORDER BY p.created_at DESC
-    LIMIT 120
-  `,
-    params
-  );
-  let polls = await attachMedia(pollsRaw);
-
-  let favoriteIds = new Set();
-  if (req.session.user && polls.length) {
-    const ids = polls.map((poll) => poll.id);
-    const marks = await all("SELECT poll_id FROM favorites WHERE user_id = ? AND poll_id = ANY(?::int[])", [req.session.user.id, ids]);
-    favoriteIds = new Set(marks.map((item) => Number(item.poll_id)));
-  }
-
-  polls = polls.map((poll) => ({ ...poll, is_favorite: favoriteIds.has(Number(poll.id)) }));
-  res.render("index", { polls, selectedCategory: categorySlug, q });
-});
+app.get("/polls/new", (_req, res) => res.redirect("/surveys/new"));
+app.get("/polls/:id", (req, res) => res.redirect(`/surveys/${req.params.id}`));
 
 app.get("/register", (_req, res) => res.render("auth/register"));
 app.post("/register", async (req, res) => {
-  const username = String(req.body.username || "").trim().slice(0, 30);
+  const username = String(req.body.username || "").trim();
   const email = String(req.body.email || "").trim().toLowerCase();
   const password = String(req.body.password || "");
+
   if (!username || !email || password.length < 6) {
     setFlash(req, "error", "Проверьте поля. Пароль минимум 6 символов.");
     return res.redirect("/register");
   }
+
   const exists = await get("SELECT id FROM users WHERE email = ? OR username = ?", [email, username]);
   if (exists) {
     setFlash(req, "error", "Пользователь с таким email или username уже существует.");
     return res.redirect("/register");
   }
+
   const passwordHash = await bcrypt.hash(password, 10);
   const adminCount = await get("SELECT COUNT(*)::int AS count FROM users WHERE is_admin = TRUE");
-  const makeAdmin = Number(adminCount.count) === 0;
-  const result = await run(
+  const isFirstAdmin = Number(adminCount.count) === 0;
+  const created = await run(
     "INSERT INTO users (username, email, password_hash, is_admin) VALUES (?, ?, ?, ?) RETURNING id",
-    [username, email, passwordHash, makeAdmin]
+    [username, email, passwordHash, isFirstAdmin]
   );
-  req.session.user = { id: result.rows[0].id, username, email, is_admin: makeAdmin };
-  setFlash(req, "success", "Аккаунт создан.");
-  req.session.save(() => res.redirect("/polls?category=general"));
+
+  req.session.user = { id: created.rows[0].id, username, email, is_admin: isFirstAdmin };
+  setFlash(req, "success", "Регистрация успешна.");
+  req.session.save(() => res.redirect("/surveys"));
 });
 
 app.get("/login", (_req, res) => res.render("auth/login"));
@@ -201,23 +135,26 @@ app.post("/login", async (req, res) => {
     setFlash(req, "error", "Введите email и пароль.");
     return res.redirect("/login");
   }
+
   const user = await get("SELECT * FROM users WHERE email = ?", [email]);
   if (!user) {
     setFlash(req, "error", "Неверный email или пароль.");
     return res.redirect("/login");
   }
   if (user.is_banned) {
-    setFlash(req, "error", "Ваш аккаунт заблокирован администратором.");
+    setFlash(req, "error", "Ваш аккаунт заблокирован.");
     return res.redirect("/login");
   }
+
   const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) {
     setFlash(req, "error", "Неверный email или пароль.");
     return res.redirect("/login");
   }
+
   req.session.user = { id: user.id, username: user.username, email: user.email, is_admin: !!user.is_admin };
   setFlash(req, "success", "Вход выполнен.");
-  req.session.save(() => res.redirect("/polls?category=general"));
+  req.session.save(() => res.redirect("/surveys"));
 });
 
 app.post("/logout", (req, res) => {
@@ -227,7 +164,370 @@ app.post("/logout", (req, res) => {
   });
 });
 
+app.get("/surveys", async (req, res) => {
+  const categorySlug = String(req.query.category || "").trim();
+  const q = String(req.query.q || "").trim();
+  const params = [];
+  const where = [];
+
+  if (categorySlug) {
+    where.push("c.slug = ?");
+    params.push(categorySlug);
+  }
+  if (q) {
+    where.push("(LOWER(s.title) LIKE LOWER(?) OR LOWER(s.description) LIKE LOWER(?) OR CAST(s.id AS TEXT) = ?)");
+    params.push(`%${q}%`, `%${q}%`, q);
+  }
+
+  const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const surveys = await all(
+    `
+    SELECT s.*, u.username, c.name AS category_name, c.slug AS category_slug,
+      (SELECT COUNT(*) FROM survey_responses r WHERE r.survey_id = s.id) AS responses_count,
+      (SELECT COUNT(*) FROM survey_comments cm WHERE cm.survey_id = s.id) AS comments_count
+    FROM surveys s
+    JOIN users u ON u.id = s.user_id
+    JOIN categories c ON c.id = s.category_id
+    ${whereClause}
+    ORDER BY s.created_at DESC
+    `,
+    params
+  );
+
+  res.render("surveys/index", { surveys, selectedCategory: categorySlug, q });
+});
+
+app.get("/surveys/new", isAuthenticated, (_req, res) => {
+  res.render("surveys/new");
+});
+
+app.post("/surveys", isAuthenticated, upload.single("cover"), async (req, res) => {
+  const title = String(req.body.title || "").trim().slice(0, 160);
+  const description = String(req.body.description || "").trim().slice(0, 4000);
+  const categoryId = Number(req.body.category_id);
+  const endAt = String(req.body.end_at || "");
+  const isAnonymous = !!req.body.is_anonymous;
+
+  const rawQuestionTexts = Array.isArray(req.body.question_texts) ? req.body.question_texts : [req.body.question_texts];
+  const rawQuestionTypes = Array.isArray(req.body.question_types) ? req.body.question_types : [req.body.question_types];
+  const rawQuestionRequired = Array.isArray(req.body.question_required) ? req.body.question_required : [req.body.question_required];
+  const rawQuestionOptions = Array.isArray(req.body.question_options) ? req.body.question_options : [req.body.question_options];
+
+  if (!title || !description || !categoryId || !endAt) {
+    setFlash(req, "error", "Заполните все обязательные поля.");
+    return res.redirect("/surveys/new");
+  }
+
+  const endDate = new Date(endAt);
+  if (Number.isNaN(endDate.getTime()) || endDate <= new Date()) {
+    setFlash(req, "error", "Дата окончания должна быть в будущем.");
+    return res.redirect("/surveys/new");
+  }
+
+  const category = await get("SELECT id FROM categories WHERE id = ?", [categoryId]);
+  if (!category) {
+    setFlash(req, "error", "Категория не найдена.");
+    return res.redirect("/surveys/new");
+  }
+
+  const questions = [];
+  for (let i = 0; i < rawQuestionTexts.length; i += 1) {
+    const questionText = String(rawQuestionTexts[i] || "").trim();
+    if (!questionText) continue;
+
+    const questionType = normalizeQuestionType(rawQuestionTypes[i]);
+    const optionsLines = String(rawQuestionOptions[i] || "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if ((questionType === "single" || questionType === "multi") && optionsLines.length < 2) {
+      setFlash(req, "error", `У вопроса "${questionText}" нужно минимум 2 варианта.`);
+      return res.redirect("/surveys/new");
+    }
+
+    questions.push({
+      questionText,
+      questionType,
+      isRequired: rawQuestionRequired[i] === "on" || rawQuestionRequired[i] === "1",
+      options: optionsLines
+    });
+  }
+
+  if (!questions.length) {
+    setFlash(req, "error", "Добавьте хотя бы один вопрос.");
+    return res.redirect("/surveys/new");
+  }
+
+  const createdSurvey = await run(
+    `
+    INSERT INTO surveys (user_id, category_id, title, description, cover_path, end_at, is_anonymous)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    RETURNING id
+    `,
+    [
+      req.session.user.id,
+      categoryId,
+      title,
+      description,
+      req.file ? `/uploads/${req.file.filename}` : null,
+      endDate.toISOString(),
+      isAnonymous
+    ]
+  );
+
+  const surveyId = createdSurvey.rows[0].id;
+
+  for (let i = 0; i < questions.length; i += 1) {
+    const q = questions[i];
+    const createdQuestion = await run(
+      `
+      INSERT INTO survey_questions (survey_id, question_text, question_type, is_required, sort_order)
+      VALUES (?, ?, ?, ?, ?)
+      RETURNING id
+      `,
+      [surveyId, q.questionText, q.questionType, q.isRequired, i]
+    );
+    const questionId = createdQuestion.rows[0].id;
+
+    for (let j = 0; j < q.options.length; j += 1) {
+      await run(
+        `
+        INSERT INTO survey_question_options (question_id, option_text, sort_order)
+        VALUES (?, ?, ?)
+        `,
+        [questionId, q.options[j], j]
+      );
+    }
+  }
+
+  setFlash(req, "success", "Анкета опубликована.");
+  res.redirect(`/surveys/${surveyId}`);
+});
+
+app.get("/surveys/:id", async (req, res) => {
+  const survey = await get(
+    `
+    SELECT s.*, u.username, c.name AS category_name
+    FROM surveys s
+    JOIN users u ON u.id = s.user_id
+    JOIN categories c ON c.id = s.category_id
+    WHERE s.id = ?
+    `,
+    [req.params.id]
+  );
+  if (!survey) return res.status(404).render("404");
+
+  const questions = await all(
+    `
+    SELECT q.*
+    FROM survey_questions q
+    WHERE q.survey_id = ?
+    ORDER BY q.sort_order, q.id
+    `,
+    [survey.id]
+  );
+
+  for (const question of questions) {
+    question.options = await all(
+      `
+      SELECT o.*
+      FROM survey_question_options o
+      WHERE o.question_id = ?
+      ORDER BY o.sort_order, o.id
+      `,
+      [question.id]
+    );
+  }
+
+  let hasResponded = false;
+  if (req.session.user) {
+    const row = await get("SELECT id FROM survey_responses WHERE survey_id = ? AND user_id = ?", [survey.id, req.session.user.id]);
+    hasResponded = !!row;
+  }
+
+  const comments = await all(
+    `
+    SELECT c.*, u.username
+    FROM survey_comments c
+    JOIN users u ON u.id = c.user_id
+    WHERE c.survey_id = ?
+    ORDER BY c.created_at DESC
+    `,
+    [survey.id]
+  );
+
+  const questionStats = {};
+  for (const question of questions) {
+    if (question.question_type === "single" || question.question_type === "multi") {
+      questionStats[question.id] = await all(
+        `
+        SELECT o.id, o.option_text, COUNT(a.id)::int AS vote_count
+        FROM survey_question_options o
+        LEFT JOIN survey_answers a ON a.option_id = o.id
+        WHERE o.question_id = ?
+        GROUP BY o.id, o.option_text
+        ORDER BY o.sort_order, o.id
+        `,
+        [question.id]
+      );
+    }
+  }
+
+  const responsesCount = await get("SELECT COUNT(*)::int AS total FROM survey_responses WHERE survey_id = ?", [survey.id]);
+
+  res.render("surveys/show", {
+    survey,
+    questions,
+    comments,
+    hasResponded,
+    questionStats,
+    responsesCount: Number(responsesCount.total || 0)
+  });
+});
+
+app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
+  const surveyId = Number(req.params.id);
+  const survey = await get("SELECT id, end_at FROM surveys WHERE id = ?", [surveyId]);
+  if (!survey) return res.status(404).render("404");
+
+  if (new Date(survey.end_at) <= new Date()) {
+    setFlash(req, "error", "Срок анкетирования истек.");
+    return res.redirect(`/surveys/${surveyId}`);
+  }
+
+  const questions = await all("SELECT * FROM survey_questions WHERE survey_id = ? ORDER BY sort_order, id", [surveyId]);
+  const byId = new Map();
+  questions.forEach((q) => byId.set(String(q.id), q));
+
+  const optionsByQuestion = {};
+  for (const q of questions) {
+    optionsByQuestion[q.id] = await all("SELECT * FROM survey_question_options WHERE question_id = ? ORDER BY sort_order, id", [q.id]);
+  }
+
+  let responseRow;
+  try {
+    responseRow = await run("INSERT INTO survey_responses (survey_id, user_id) VALUES (?, ?) RETURNING id", [surveyId, req.session.user.id]);
+  } catch (_err) {
+    setFlash(req, "error", "Вы уже отправляли ответы в этой анкете.");
+    return res.redirect(`/surveys/${surveyId}`);
+  }
+
+  const responseId = responseRow.rows[0].id;
+  for (const question of questions) {
+    const key = `q_${question.id}`;
+    const value = req.body[key];
+
+    if (question.question_type === "text") {
+      const textValue = String(value || "").trim();
+      if (question.is_required && !textValue) {
+        setFlash(req, "error", "Заполните обязательные поля.");
+        return res.redirect(`/surveys/${surveyId}`);
+      }
+      if (textValue) {
+        await run("INSERT INTO survey_answers (response_id, question_id, text_value) VALUES (?, ?, ?)", [responseId, question.id, textValue]);
+      }
+      continue;
+    }
+
+    if (question.question_type === "scale") {
+      const num = Number(value);
+      if (question.is_required && !value) {
+        setFlash(req, "error", "Заполните обязательные поля.");
+        return res.redirect(`/surveys/${surveyId}`);
+      }
+      if (value && (Number.isNaN(num) || num < 1 || num > 5)) {
+        setFlash(req, "error", "Некорректное значение шкалы.");
+        return res.redirect(`/surveys/${surveyId}`);
+      }
+      if (value) {
+        await run("INSERT INTO survey_answers (response_id, question_id, number_value) VALUES (?, ?, ?)", [responseId, question.id, num]);
+      }
+      continue;
+    }
+
+    const allowed = new Set(optionsByQuestion[question.id].map((o) => Number(o.id)));
+    if (question.question_type === "single") {
+      const optionId = Number(value);
+      if (question.is_required && !value) {
+        setFlash(req, "error", "Заполните обязательные поля.");
+        return res.redirect(`/surveys/${surveyId}`);
+      }
+      if (value && !allowed.has(optionId)) {
+        setFlash(req, "error", "Некорректный вариант ответа.");
+        return res.redirect(`/surveys/${surveyId}`);
+      }
+      if (value) {
+        await run("INSERT INTO survey_answers (response_id, question_id, option_id) VALUES (?, ?, ?)", [responseId, question.id, optionId]);
+      }
+      continue;
+    }
+
+    const rawValues = Array.isArray(value) ? value : value ? [value] : [];
+    if (question.is_required && !rawValues.length) {
+      setFlash(req, "error", "Заполните обязательные поля.");
+      return res.redirect(`/surveys/${surveyId}`);
+    }
+    for (const raw of rawValues) {
+      const optionId = Number(raw);
+      if (!allowed.has(optionId)) {
+        setFlash(req, "error", "Некорректный вариант ответа.");
+        return res.redirect(`/surveys/${surveyId}`);
+      }
+      await run("INSERT INTO survey_answers (response_id, question_id, option_id) VALUES (?, ?, ?)", [responseId, question.id, optionId]);
+    }
+  }
+
+  setFlash(req, "success", "Ответы сохранены.");
+  res.redirect(`/surveys/${surveyId}`);
+});
+
+app.post("/surveys/:id/comments", isAuthenticated, async (req, res) => {
+  const surveyId = Number(req.params.id);
+  const body = String(req.body.body || "").trim().slice(0, 2000);
+  if (!body) {
+    setFlash(req, "error", "Комментарий не может быть пустым.");
+    return res.redirect(`/surveys/${surveyId}`);
+  }
+  await run("INSERT INTO survey_comments (survey_id, user_id, body) VALUES (?, ?, ?)", [surveyId, req.session.user.id, body]);
+  setFlash(req, "success", "Комментарий добавлен.");
+  res.redirect(`/surveys/${surveyId}`);
+});
+
+app.post("/reports", isAuthenticated, async (req, res) => {
+  const surveyId = req.body.survey_id ? Number(req.body.survey_id) : null;
+  const commentId = req.body.comment_id ? Number(req.body.comment_id) : null;
+  const reason = String(req.body.reason || "").trim().slice(0, 300);
+  if (!reason || (!surveyId && !commentId)) {
+    setFlash(req, "error", "Некорректная жалоба.");
+    return res.redirect("/surveys");
+  }
+
+  await run("INSERT INTO reports (reporter_id, survey_id, comment_id, reason) VALUES (?, ?, ?, ?)", [
+    req.session.user.id,
+    surveyId,
+    commentId,
+    reason
+  ]);
+  setFlash(req, "success", "Жалоба отправлена.");
+  res.redirect(req.get("Referrer") || "/surveys");
+});
+
 app.get("/me", isAuthenticated, (req, res) => res.redirect(`/profile/${req.session.user.id}`));
+app.get("/me/edit", isAuthenticated, async (req, res) => {
+  const user = await get("SELECT id, username, email, bio, avatar_path FROM users WHERE id = ?", [req.session.user.id]);
+  res.render("edit-profile", { user });
+});
+
+app.post("/me/edit", isAuthenticated, upload.single("avatar"), async (req, res) => {
+  const bio = String(req.body.bio || "").trim().slice(0, 500);
+  const user = await get("SELECT avatar_path FROM users WHERE id = ?", [req.session.user.id]);
+  const avatarPath = req.file ? `/uploads/${req.file.filename}` : user.avatar_path || null;
+  await run("UPDATE users SET bio = ?, avatar_path = ? WHERE id = ?", [bio, avatarPath, req.session.user.id]);
+  setFlash(req, "success", "Профиль обновлен.");
+  res.redirect(`/profile/${req.session.user.id}`);
+});
+
 app.get("/profile/:id", async (req, res) => {
   const profileUser = await get(
     "SELECT id, username, email, bio, avatar_path, is_admin, created_at FROM users WHERE id = ?",
@@ -235,263 +535,33 @@ app.get("/profile/:id", async (req, res) => {
   );
   if (!profileUser) return res.status(404).render("404");
 
-  const polls = await all(
+  const surveys = await all(
     `
-    SELECT p.*, (SELECT COUNT(*) FROM votes v WHERE v.poll_id = p.id) AS vote_count
-    FROM polls p
-    JOIN categories c ON c.id = p.category_id
-    WHERE p.user_id = ? AND c.is_enabled = TRUE
-    ORDER BY p.created_at DESC
-  `,
+    SELECT s.*, (SELECT COUNT(*) FROM survey_responses r WHERE r.survey_id = s.id) AS responses_count
+    FROM surveys s
+    WHERE s.user_id = ?
+    ORDER BY s.created_at DESC
+    `,
     [profileUser.id]
   );
-  const favorites = await all(
-    `
-    SELECT p.id, p.title, c.slug AS category_slug, c.name AS category_name
-    FROM favorites f
-    JOIN polls p ON p.id = f.poll_id
-    JOIN categories c ON c.id = p.category_id
-    WHERE f.user_id = ? AND c.is_enabled = TRUE
-    ORDER BY f.created_at DESC
-    LIMIT 30
-  `,
-    [profileUser.id]
-  );
-  res.render("profile", { profileUser, polls, favorites });
-});
 
-app.get("/me/edit", isAuthenticated, async (req, res) => {
-  const user = await get("SELECT id, username, email, bio, avatar_path FROM users WHERE id = ?", [req.session.user.id]);
-  res.render("edit-profile", { user });
-});
-app.post("/me/edit", isAuthenticated, upload.single("avatar"), async (req, res) => {
-  const bio = String(req.body.bio || "").trim().slice(0, 500);
-  const user = await get("SELECT avatar_path FROM users WHERE id = ?", [req.session.user.id]);
-  let avatarPath = user?.avatar_path || null;
-  if (req.file && req.file.mimetype.startsWith("image/")) avatarPath = `/uploads/${req.file.filename}`;
-  await run("UPDATE users SET bio = ?, avatar_path = ? WHERE id = ?", [bio, avatarPath, req.session.user.id]);
-  setFlash(req, "success", "Профиль обновлен.");
-  res.redirect(`/profile/${req.session.user.id}`);
-});
-
-app.get("/polls/new", isAuthenticated, (_req, res) => res.render("poll-new"));
-app.post(
-  "/polls",
-  isAuthenticated,
-  upload.fields([{ name: "images", maxCount: 12 }, { name: "videos", maxCount: 8 }]),
-  async (req, res) => {
-    const title = String(req.body.title || "").trim().slice(0, 140);
-    const description = String(req.body.description || "").trim().slice(0, 15000);
-    const categoryId = Number(req.body.category_id);
-    const endAt = String(req.body.end_at || "");
-    const isAnonymous = !!req.body.is_anonymous;
-    let options = req.body.options || [];
-    if (!Array.isArray(options)) options = [options];
-    options = options.map((item) => String(item || "").trim()).filter(Boolean);
-    if (!title || !description || !categoryId || !endAt || options.length < 2) {
-      setFlash(req, "error", "Заполните поля и добавьте минимум 2 варианта ответа.");
-      return res.redirect("/polls/new");
-    }
-    const endDate = new Date(endAt);
-    if (Number.isNaN(endDate.getTime()) || endDate <= new Date()) {
-      setFlash(req, "error", "Дата окончания должна быть в будущем.");
-      return res.redirect("/polls/new");
-    }
-    const category = await get("SELECT id FROM categories WHERE id = ? AND is_enabled = TRUE", [categoryId]);
-    if (!category) {
-      setFlash(req, "error", "Категория не найдена.");
-      return res.redirect("/polls/new");
-    }
-
-    const imageFiles = req.files?.images || [];
-    const videoFiles = req.files?.videos || [];
-    const firstImage = imageFiles[0] ? `/uploads/${imageFiles[0].filename}` : null;
-    const firstVideo = videoFiles[0] ? `/uploads/${videoFiles[0].filename}` : null;
-
-    const result = await run(
-      `
-      INSERT INTO polls (user_id, category_id, title, description, image_path, video_path, end_at, is_anonymous)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id
-    `,
-      [req.session.user.id, categoryId, title, description, firstImage, firstVideo, endDate.toISOString(), isAnonymous]
-    );
-    const pollId = result.rows[0].id;
-
-    let sortOrder = 0;
-    for (const file of imageFiles) {
-      await run("INSERT INTO poll_media (poll_id, media_type, path, sort_order) VALUES (?, 'image', ?, ?)", [
-        pollId,
-        `/uploads/${file.filename}`,
-        sortOrder++
-      ]);
-    }
-    for (const file of videoFiles) {
-      await run("INSERT INTO poll_media (poll_id, media_type, path, sort_order) VALUES (?, 'video', ?, ?)", [
-        pollId,
-        `/uploads/${file.filename}`,
-        sortOrder++
-      ]);
-    }
-    for (const optionText of options) {
-      await run("INSERT INTO poll_options (poll_id, option_text) VALUES (?, ?)", [pollId, optionText.slice(0, 255)]);
-    }
-    setFlash(req, "success", "Опрос опубликован.");
-    return res.redirect(`/polls/${pollId}`);
-  }
-);
-
-app.get("/polls/:id", async (req, res) => {
-  const poll = await get(
-    `
-    SELECT p.*, u.username, u.avatar_path, c.name AS category_name, c.slug AS category_slug
-    FROM polls p
-    JOIN users u ON p.user_id = u.id
-    JOIN categories c ON p.category_id = c.id
-    WHERE p.id = ? AND c.is_enabled = TRUE
-  `,
-    [req.params.id]
-  );
-  if (!poll) return res.status(404).render("404");
-
-  const pollMedia = await all("SELECT * FROM poll_media WHERE poll_id = ? ORDER BY sort_order, id", [poll.id]);
-  poll.images = pollMedia.filter((m) => m.media_type === "image");
-  poll.videos = pollMedia.filter((m) => m.media_type === "video");
-  if (!poll.images.length && poll.image_path) poll.images = [{ path: poll.image_path }];
-  if (!poll.videos.length && poll.video_path) poll.videos = [{ path: poll.video_path }];
-
-  const options = await all(
-    `
-    SELECT po.*, (SELECT COUNT(*) FROM votes v WHERE v.option_id = po.id) AS vote_count
-    FROM poll_options po
-    WHERE po.poll_id = ?
-    ORDER BY po.id
-  `,
-    [poll.id]
-  );
-  const totalVotesRow = await get("SELECT COUNT(*)::int AS total FROM votes WHERE poll_id = ?", [poll.id]);
-  const totalVotes = Number(totalVotesRow.total || 0);
-
-  let userVote = null;
-  let isFavorite = false;
-  if (req.session.user) {
-    userVote = await get("SELECT id FROM votes WHERE poll_id = ? AND user_id = ?", [poll.id, req.session.user.id]);
-    const favorite = await get("SELECT id FROM favorites WHERE poll_id = ? AND user_id = ?", [poll.id, req.session.user.id]);
-    isFavorite = !!favorite;
-  }
-
-  const comments = await all(
-    `
-    SELECT cm.*, u.username, u.avatar_path
-    FROM comments cm
-    JOIN users u ON u.id = cm.user_id
-    WHERE cm.poll_id = ?
-    ORDER BY cm.created_at DESC
-  `,
-    [poll.id]
-  );
-  let voters = [];
-  if (!poll.is_anonymous) {
-    voters = await all(
-      `
-      SELECT u.id, u.username, po.option_text
-      FROM votes v
-      JOIN users u ON u.id = v.user_id
-      JOIN poll_options po ON po.id = v.option_id
-      WHERE v.poll_id = ?
-      ORDER BY v.created_at DESC
-      LIMIT 60
-    `,
-      [poll.id]
-    );
-  }
-  res.render("poll-show", { poll, options, comments, totalVotes, userVote, voters, isFavorite });
-});
-
-app.post("/polls/:id/favorite", isAuthenticated, async (req, res) => {
-  const pollId = Number(req.params.id);
-  const next = String(req.body.next || req.get("Referrer") || "/polls");
-  const row = await get("SELECT id FROM favorites WHERE poll_id = ? AND user_id = ?", [pollId, req.session.user.id]);
-  if (row) {
-    await run("DELETE FROM favorites WHERE poll_id = ? AND user_id = ?", [pollId, req.session.user.id]);
-    setFlash(req, "success", "Убрано из избранного.");
-  } else {
-    await run("INSERT INTO favorites (user_id, poll_id) VALUES (?, ?) ON CONFLICT (user_id, poll_id) DO NOTHING", [
-      req.session.user.id,
-      pollId
-    ]);
-    setFlash(req, "success", "Добавлено в избранное.");
-  }
-  res.redirect(next.startsWith("/") ? next : "/polls");
-});
-
-app.post("/polls/:id/vote", isAuthenticated, async (req, res) => {
-  const pollId = Number(req.params.id);
-  const optionId = Number(req.body.option_id);
-  const userId = req.session.user.id;
-  const user = await get("SELECT is_banned FROM users WHERE id = ?", [userId]);
-  if (!user || user.is_banned) {
-    setFlash(req, "error", "Ваш аккаунт заблокирован.");
-    return res.redirect(`/polls/${pollId}`);
-  }
-  const poll = await get("SELECT * FROM polls WHERE id = ?", [pollId]);
-  if (!poll) {
-    setFlash(req, "error", "Опрос не найден.");
-    return res.redirect("/polls");
-  }
-  if (new Date(poll.end_at) <= new Date()) {
-    setFlash(req, "error", "Время голосования истекло.");
-    return res.redirect(`/polls/${pollId}`);
-  }
-  const option = await get("SELECT id FROM poll_options WHERE id = ? AND poll_id = ?", [optionId, pollId]);
-  if (!option) {
-    setFlash(req, "error", "Некорректный вариант ответа.");
-    return res.redirect(`/polls/${pollId}`);
-  }
-  try {
-    await run("INSERT INTO votes (poll_id, option_id, user_id) VALUES (?, ?, ?)", [pollId, optionId, userId]);
-    setFlash(req, "success", "Голос принят.");
-  } catch (_err) {
-    setFlash(req, "error", "Повторное голосование запрещено.");
-  }
-  return res.redirect(`/polls/${pollId}`);
-});
-
-app.post("/polls/:id/comments", isAuthenticated, async (req, res) => {
-  const pollId = Number(req.params.id);
-  const body = String(req.body.body || "").trim().slice(0, 4000);
-  if (!body) {
-    setFlash(req, "error", "Комментарий не может быть пустым.");
-    return res.redirect(`/polls/${pollId}`);
-  }
-  await run("INSERT INTO comments (poll_id, user_id, body) VALUES (?, ?, ?)", [pollId, req.session.user.id, body]);
-  setFlash(req, "success", "Комментарий добавлен.");
-  return res.redirect(`/polls/${pollId}`);
-});
-
-app.post("/reports", isAuthenticated, async (req, res) => {
-  const pollId = req.body.poll_id || null;
-  const commentId = req.body.comment_id || null;
-  const reason = String(req.body.reason || "").trim().slice(0, 300);
-  if (!reason || (!pollId && !commentId)) {
-    setFlash(req, "error", "Некорректная жалоба.");
-    return res.redirect("/polls");
-  }
-  await run("INSERT INTO reports (reporter_id, poll_id, comment_id, reason) VALUES (?, ?, ?, ?)", [
-    req.session.user.id,
-    pollId,
-    commentId,
-    reason
-  ]);
-  setFlash(req, "success", "Жалоба отправлена.");
-  return res.redirect(req.get("Referrer") || "/polls");
+  res.render("profile", { profileUser, surveys });
 });
 
 app.get("/admin", isAdmin, async (_req, res) => {
   const users = await all("SELECT id, username, email, is_banned, is_admin, created_at FROM users ORDER BY id DESC");
-  const reports = await all("SELECT r.*, u.username AS reporter_name FROM reports r JOIN users u ON u.id = r.reporter_id ORDER BY r.created_at DESC");
-  const polls = await all("SELECT p.id, p.title, u.username FROM polls p JOIN users u ON u.id = p.user_id ORDER BY p.created_at DESC LIMIT 40");
-  const comments = await all("SELECT c.id, c.body, c.poll_id, u.username FROM comments c JOIN users u ON u.id = c.user_id ORDER BY c.created_at DESC LIMIT 40");
-  res.render("admin", { users, reports, polls, comments });
+  const surveys = await all("SELECT s.id, s.title, s.end_at, u.username FROM surveys s JOIN users u ON u.id = s.user_id ORDER BY s.created_at DESC LIMIT 50");
+  const comments = await all("SELECT c.id, c.body, c.survey_id, u.username FROM survey_comments c JOIN users u ON u.id = c.user_id ORDER BY c.created_at DESC LIMIT 50");
+  const reports = await all(
+    `
+    SELECT r.*, u.username AS reporter_name
+    FROM reports r
+    JOIN users u ON u.id = r.reporter_id
+    ORDER BY r.created_at DESC
+    LIMIT 80
+    `
+  );
+  res.render("admin", { users, surveys, comments, reports });
 });
 
 app.post("/admin/users/:id/toggle-ban", isAdmin, async (req, res) => {
@@ -506,36 +576,43 @@ app.post("/admin/users/:id/toggle-ban", isAdmin, async (req, res) => {
   }
   await run("UPDATE users SET is_banned = ? WHERE id = ?", [!user.is_banned, req.params.id]);
   setFlash(req, "success", user.is_banned ? "Пользователь разбанен." : "Пользователь забанен.");
-  return res.redirect("/admin");
+  res.redirect("/admin");
 });
-app.post("/admin/polls/:id/delete", isAdmin, async (req, res) => {
-  await run("DELETE FROM polls WHERE id = ?", [req.params.id]);
-  setFlash(req, "success", "Опрос удален.");
-  return res.redirect("/admin");
+
+app.post("/admin/surveys/:id/delete", isAdmin, async (req, res) => {
+  await run("DELETE FROM surveys WHERE id = ?", [req.params.id]);
+  setFlash(req, "success", "Анкета удалена.");
+  res.redirect("/admin");
 });
+
 app.post("/admin/comments/:id/delete", isAdmin, async (req, res) => {
-  await run("DELETE FROM comments WHERE id = ?", [req.params.id]);
+  await run("DELETE FROM survey_comments WHERE id = ?", [req.params.id]);
   setFlash(req, "success", "Комментарий удален.");
-  return res.redirect("/admin");
+  res.redirect("/admin");
 });
+
 app.post("/admin/reports/:id/resolve", isAdmin, async (req, res) => {
   await run("UPDATE reports SET status = 'resolved' WHERE id = ?", [req.params.id]);
   setFlash(req, "success", "Жалоба обработана.");
-  return res.redirect("/admin");
+  res.redirect("/admin");
 });
 
 app.get("/requisites", (_req, res) => res.render("requisites"));
-app.use((_req, res) => res.status(404).render("404"));
+
+app.use((_req, res) => {
+  res.status(404).render("404");
+});
+
 app.use((err, req, res, _next) => {
   setFlash(req, "error", err.message || "Ошибка сервера.");
-  res.redirect(req.get("Referrer") || "/polls");
+  res.redirect(req.get("Referrer") || "/surveys");
 });
 
 async function bootstrap() {
   await initDb();
   app.listen(PORT, () => {
     // eslint-disable-next-line no-console
-    console.log(`Molecula running on http://localhost:${PORT}`);
+    console.log(`Molecula v2 running on http://localhost:${PORT}`);
   });
 }
 

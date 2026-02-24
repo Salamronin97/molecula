@@ -1,20 +1,19 @@
 <%- include("../partials/header") %>
-<section class="thread-form-page">
-  <div class="thread-form-title">Регистрация</div>
-  <form method="POST" action="/register" class="thread-form-card">
-    <div class="form-line">
-      <label>Username</label>
+
+<section class="card form-card">
+  <h1>Регистрация</h1>
+  <form method="POST" action="/register">
+    <label>Имя пользователя
       <input type="text" name="username" required minlength="3" maxlength="30" />
-    </div>
-    <div class="form-line">
-      <label>Email</label>
+    </label>
+    <label>Email
       <input type="email" name="email" required />
-    </div>
-    <div class="form-line">
-      <label>Пароль</label>
+    </label>
+    <label>Пароль
       <input type="password" name="password" required minlength="6" />
-    </div>
-    <button type="submit" class="toolbar-btn toolbar-btn-primary">Создать аккаунт</button>
+    </label>
+    <button type="submit" class="btn">Создать аккаунт</button>
   </form>
 </section>
+
 <%- include("../partials/footer") %>

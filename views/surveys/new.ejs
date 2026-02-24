@@ -1,0 +1,61 @@
+<%- include("../partials/header") %>
+
+<section class="card form-card">
+  <h1>Создание анкеты</h1>
+  <form action="/surveys" method="POST" enctype="multipart/form-data" id="survey-form">
+    <label>Название анкеты
+      <input type="text" name="title" required maxlength="160" />
+    </label>
+    <label>Описание
+      <textarea name="description" rows="4" required maxlength="4000"></textarea>
+    </label>
+    <label>Категория
+      <select name="category_id" required>
+        <% categories.forEach((category) => { %>
+          <option value="<%= category.id %>"><%= category.name %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Дата завершения
+      <input type="datetime-local" name="end_at" required />
+    </label>
+    <label>Обложка (фото)
+      <input type="file" name="cover" accept="image/*" />
+    </label>
+    <label class="checkline">
+      <input type="checkbox" name="is_anonymous" value="1" />
+      Анонимная анкета
+    </label>
+
+    <h2>Вопросы</h2>
+    <div id="questions"></div>
+    <button type="button" class="btn ghost" id="add-question">Добавить вопрос</button>
+    <button type="submit" class="btn">Опубликовать анкету</button>
+  </form>
+</section>
+
+<template id="question-template">
+  <div class="question-builder">
+    <label>Текст вопроса
+      <input type="text" name="question_texts" required />
+    </label>
+    <label>Тип вопроса
+      <select name="question_types" class="question-type">
+        <option value="text">Текстовый ответ</option>
+        <option value="single">Один вариант (голосование)</option>
+        <option value="multi">Несколько вариантов (голосование)</option>
+        <option value="scale">Шкала 1-5</option>
+      </select>
+    </label>
+    <label class="checkline">
+      <input type="checkbox" name="question_required" checked />
+      Обязательный
+    </label>
+    <label class="options-block">Варианты ответа (каждый с новой строки)
+      <textarea name="question_options" rows="4"></textarea>
+    </label>
+    <button type="button" class="btn ghost remove-question">Удалить вопрос</button>
+  </div>
+</template>
+
+<%- include("../partials/footer") %>

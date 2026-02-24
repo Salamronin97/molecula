@@ -3,24 +3,17 @@
 <section class="toolbar">
   <form method="GET" action="/surveys" class="search-form">
     <input type="text" name="q" value="<%= q || '' %>" placeholder="Поиск: ID, название, описание" />
-    <select name="category">
-      <option value="">Все категории</option>
-      <% categories.forEach((category) => { %>
-        <option value="<%= category.slug %>" <%= selectedCategory === category.slug ? "selected" : "" %>><%= category.name %></option>
-      <% }) %>
-    </select>
     <button type="submit">Найти</button>
   </form>
 </section>
 
 <section class="list">
   <% if (!surveys.length) { %>
-    <article class="card">Анкет пока нет.</article>
+    <article class="card">Пока нет опубликованных опросов.</article>
   <% } %>
   <% surveys.forEach((survey) => { %>
     <article class="survey-item">
       <div class="survey-meta">
-        <span class="badge"><%= survey.category_name %></span>
         <span>Автор: <a href="/profile/<%= survey.user_id %>"><%= survey.username %></a></span>
         <span class="timer" data-countdown="<%= survey.end_at %>"></span>
       </div>
@@ -32,7 +25,7 @@
       <div class="survey-meta">
         <span>Ответов: <%= survey.responses_count %></span>
         <span>Комментариев: <%= survey.comments_count %></span>
-        <span><%= survey.is_anonymous ? "Анонимная анкета" : "Публичная анкета" %></span>
+        <span><%= survey.is_anonymous ? "Анонимный" : "Публичный" %></span>
       </div>
     </article>
   <% }) %>

@@ -167,20 +167,7 @@ async function initDb() {
   `);
 
   await run("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_path TEXT");
-
-  const defaultCategories = [
-    ["Общество", "society"],
-    ["Образование", "education"],
-    ["Город и благоустройство", "city"],
-    ["Здравоохранение", "health"],
-    ["Транспорт", "transport"],
-    ["Экология", "ecology"],
-    ["Цифровые сервисы", "digital"]
-  ];
-
-  for (const [name, slug] of defaultCategories) {
-    await run("INSERT INTO categories (name, slug) VALUES (?, ?) ON CONFLICT (slug) DO NOTHING", [name, slug]);
-  }
+  await run("INSERT INTO categories (name, slug) VALUES (?, ?) ON CONFLICT (slug) DO NOTHING", ["Разное", "misc"]);
 }
 
 module.exports = {

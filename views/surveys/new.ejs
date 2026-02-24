@@ -1,20 +1,13 @@
 <%- include("../partials/header") %>
 
 <section class="card form-card">
-  <h1>Создание анкеты</h1>
+  <h1>Создание опроса</h1>
   <form action="/surveys" method="POST" enctype="multipart/form-data" id="survey-form">
-    <label>Название анкеты
+    <label>Название опроса
       <input type="text" name="title" required maxlength="160" />
     </label>
     <label>Описание
       <textarea name="description" rows="4" required maxlength="4000"></textarea>
-    </label>
-    <label>Категория
-      <select name="category_id" required>
-        <% categories.forEach((category) => { %>
-          <option value="<%= category.id %>"><%= category.name %></option>
-        <% }) %>
-      </select>
     </label>
     <label>Дата завершения
       <input type="datetime-local" name="end_at" required />
@@ -22,18 +15,18 @@
     <label>Обложка (фото)
       <input type="file" name="cover" accept="image/*" />
     </label>
-    <label>Дополнительные материалы (фото/видео, можно несколько)
+    <label>Дополнительные материалы (фото/видео, несколько файлов)
       <input type="file" name="media" accept="image/*,video/*" multiple />
     </label>
     <label class="checkline">
       <input type="checkbox" name="is_anonymous" value="1" />
-      Анонимная анкета
+      Анонимный опрос
     </label>
 
     <h2>Вопросы</h2>
     <div id="questions"></div>
     <button type="button" class="btn ghost" id="add-question">Добавить вопрос</button>
-    <button type="submit" class="btn">Опубликовать анкету</button>
+    <button type="submit" class="btn">Опубликовать опрос</button>
   </form>
 </section>
 
@@ -45,8 +38,8 @@
     <label>Тип вопроса
       <select name="question_types" class="question-type">
         <option value="text">Текстовый ответ</option>
-        <option value="single">Один вариант (голосование)</option>
-        <option value="multi">Несколько вариантов (голосование)</option>
+        <option value="single">Один вариант (радио)</option>
+        <option value="multi">Несколько вариантов (чекбоксы)</option>
         <option value="scale">Шкала 1-5</option>
       </select>
     </label>

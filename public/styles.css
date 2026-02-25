@@ -210,6 +210,10 @@ select {
   background: linear-gradient(120deg, #f8fbff 0%, #ecf3ff 52%, #f4f8ff 100%);
 }
 
+.home-hero-plain {
+  background: #f6f9ff;
+}
+
 .home-hero-inner {
   padding: 36px 34px;
 }
@@ -508,6 +512,33 @@ select {
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #fff;
+}
+
+.progress-wrap {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f9fbff;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.progress-meta {
+  font-size: 0.94rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.progress-line {
+  height: 10px;
+  background: #e7edf8;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-line-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #2e8cf0, #22ba98);
 }
 
 .profile-card p {

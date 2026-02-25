@@ -25,9 +25,16 @@
     <label>Описание
       <textarea name="description" rows="4" required maxlength="4000"></textarea>
     </label>
-    <label>Дата завершения
-      <input type="datetime-local" name="end_at" required />
+
+    <label class="checkline">
+      <input type="checkbox" name="has_deadline" value="1" id="has-deadline-toggle" />
+      Включить дедлайн (таймер окончания)
     </label>
+    <label id="deadline-wrap" style="display:none;">
+      Дата завершения
+      <input type="datetime-local" name="end_at" id="end-at-input" />
+    </label>
+
     <label>Обложка (фото)
       <input type="file" name="cover" accept="image/*" />
     </label>

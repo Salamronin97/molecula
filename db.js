@@ -87,6 +87,7 @@ async function initDb() {
       description TEXT NOT NULL,
       cover_path TEXT,
       end_at TIMESTAMPTZ NOT NULL,
+      has_deadline BOOLEAN DEFAULT FALSE,
       is_anonymous BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
@@ -169,6 +170,7 @@ async function initDb() {
 
   await run("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_path TEXT");
   await run("ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS next_question_order INTEGER");
+  await run("ALTER TABLE surveys ADD COLUMN IF NOT EXISTS has_deadline BOOLEAN DEFAULT FALSE");
   await run("INSERT INTO categories (name, slug) VALUES (?, ?) ON CONFLICT (slug) DO NOTHING", ["Разное", "misc"]);
 }
 

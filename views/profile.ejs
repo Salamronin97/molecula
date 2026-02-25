@@ -20,7 +20,14 @@
   <% surveys.forEach((survey) => { %>
     <article class="survey-item">
       <h3><a href="/surveys/<%= survey.id %>"><%= survey.title %></a></h3>
-      <p class="muted">Ответов: <%= survey.responses_count %> · <span class="timer" data-countdown="<%= survey.end_at %>"></span></p>
+      <p class="muted">
+        Ответов: <%= survey.responses_count %>
+        <% if (survey.has_deadline) { %>
+          · <span class="timer" data-countdown="<%= survey.end_at %>"></span>
+        <% } else { %>
+          · Без дедлайна
+        <% } %>
+      </p>
     </article>
   <% }) %>
 </section>

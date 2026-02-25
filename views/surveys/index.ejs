@@ -15,7 +15,11 @@
     <article class="survey-item">
       <div class="survey-meta">
         <span>Автор: <a href="/profile/<%= survey.user_id %>"><%= survey.username %></a></span>
-        <span class="timer" data-countdown="<%= survey.end_at %>"></span>
+        <% if (survey.has_deadline) { %>
+          <span class="timer" data-countdown="<%= survey.end_at %>"></span>
+        <% } else { %>
+          <span>Без дедлайна</span>
+        <% } %>
       </div>
       <h2><a href="/surveys/<%= survey.id %>"><%= survey.title %></a></h2>
       <p><%= survey.description.length > 220 ? `${survey.description.slice(0, 220)}...` : survey.description %></p>

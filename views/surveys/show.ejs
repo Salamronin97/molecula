@@ -3,7 +3,11 @@
 <article class="survey-item survey-page">
   <div class="survey-meta">
     <span>Автор: <a href="/profile/<%= survey.user_id %>"><%= survey.username %></a></span>
-    <span class="timer" data-countdown="<%= survey.end_at %>"></span>
+    <% if (survey.has_deadline) { %>
+      <span class="timer" data-countdown="<%= survey.end_at %>"></span>
+    <% } else { %>
+      <span>Без дедлайна</span>
+    <% } %>
     <span><%= survey.is_anonymous ? "Анонимный" : "Публичный" %></span>
   </div>
 
@@ -59,16 +63,23 @@
     <p>Чтобы отправить ответы, выполните вход.</p>
   <% } else if (hasResponded) { %>
     <p>Вы уже отправили ответы в этом опросе.</p>
-  <% } else if (new Date(survey.end_at) <= now) { %>
+  <% } else if (survey.has_deadline && new Date(survey.end_at) <= now) { %>
     <p>Опрос завершен.</p>
   <% } else { %>
-    <form action="/surveys/<%= survey.id %>/respond" method="POST">
+    <div class="progress-wrap">
+      <div class="progress-meta">Заполнено: <span id="form-progress-text">0%</span></div>
+      <div class="progress-line">
+        <div id="form-progress-bar" class="progress-line-fill"></div>
+      </div>
+    </div>
+    <form action="/surveys/<%= survey.id %>/respond" method="POST" id="survey-response-form">
       <% questions.forEach((question, index) => { %>
-        <div class="question-view">
+        <div class="question-view" data-question-block>
           <h3><%= index + 1 %>. <%= question.question_text %> <%= question.is_required ? "*" : "" %></h3>
           <% if (question.next_question_order) { %>
             <p class="muted">После ответа переход к вопросу №<%= question.next_question_order %></p>
           <% } %>
+
           <% if (question.question_type === "text") { %>
             <textarea name="q_<%= question.id %>" rows="3" <%= question.is_required ? "required" : "" %>></textarea>
           <% } %>

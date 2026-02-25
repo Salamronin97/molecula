@@ -145,6 +145,51 @@ if (questionsWrap && questionTemplate && !questionsWrap.children.length) {
   addQuestion();
 }
 
+const hasDeadlineToggle = document.getElementById("has-deadline-toggle");
+const deadlineWrap = document.getElementById("deadline-wrap");
+const endAtInput = document.getElementById("end-at-input");
+if (hasDeadlineToggle && deadlineWrap && endAtInput) {
+  const syncDeadlineState = () => {
+    const enabled = hasDeadlineToggle.checked;
+    deadlineWrap.style.display = enabled ? "grid" : "none";
+    if (enabled) endAtInput.setAttribute("required", "required");
+    else endAtInput.removeAttribute("required");
+  };
+  hasDeadlineToggle.addEventListener("change", syncDeadlineState);
+  syncDeadlineState();
+}
+
+const responseForm = document.getElementById("survey-response-form");
+const progressText = document.getElementById("form-progress-text");
+const progressBar = document.getElementById("form-progress-bar");
+if (responseForm && progressText && progressBar) {
+  const questionBlocks = Array.from(responseForm.querySelectorAll("[data-question-block]"));
+  const readBlockProgress = (block) => {
+    const radios = Array.from(block.querySelectorAll('input[type="radio"]'));
+    const checks = Array.from(block.querySelectorAll('input[type="checkbox"]'));
+    const selects = Array.from(block.querySelectorAll("select"));
+    const texts = Array.from(block.querySelectorAll("textarea"));
+
+    if (radios.length) return radios.some((el) => el.checked);
+    if (checks.length) return checks.some((el) => el.checked);
+    if (selects.length) return selects.some((el) => String(el.value || "").trim() !== "");
+    if (texts.length) return texts.some((el) => String(el.value || "").trim() !== "");
+    return false;
+  };
+
+  const updateProgress = () => {
+    if (!questionBlocks.length) return;
+    const completed = questionBlocks.filter(readBlockProgress).length;
+    const percent = Math.round((completed / questionBlocks.length) * 100);
+    progressText.textContent = `${percent}%`;
+    progressBar.style.width = `${percent}%`;
+  };
+
+  responseForm.addEventListener("input", updateProgress);
+  responseForm.addEventListener("change", updateProgress);
+  updateProgress();
+}
+
 const shareLinkInput = document.getElementById("share-link");
 const copyLinkBtn = document.getElementById("copy-link-btn");
 if (shareLinkInput && copyLinkBtn) {

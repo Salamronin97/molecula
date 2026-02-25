@@ -210,6 +210,7 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
   const title = String(req.body.title || "").trim().slice(0, 160);
   const description = String(req.body.description || "").trim().slice(0, 4000);
   const endAt = String(req.body.end_at || "");
+  const hasDeadline = !!req.body.has_deadline;
   const isAnonymous = !!req.body.is_anonymous;
 
   const rawQuestionTexts = Array.isArray(req.body.question_texts) ? req.body.question_texts : [req.body.question_texts];
@@ -220,13 +221,16 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
     ? req.body.question_next_orders
     : [req.body.question_next_orders];
 
-  if (!title || !description || !endAt) {
+  if (!title || !description) {
     setFlash(req, "error", "Р—Р°РїРѕР»РЅРёС‚Рµ РІСЃРµ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рµ РїРѕР»СЏ.");
     return res.redirect("/surveys/new");
   }
 
-  const endDate = new Date(endAt);
-  if (Number.isNaN(endDate.getTime()) || endDate <= new Date()) {
+  let endDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 10);
+  if (hasDeadline) {
+    endDate = new Date(endAt);
+  }
+  if (hasDeadline && (Number.isNaN(endDate.getTime()) || endDate <= new Date())) {
     setFlash(req, "error", "Р”Р°С‚Р° РѕРєРѕРЅС‡Р°РЅРёСЏ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РІ Р±СѓРґСѓС‰РµРј.");
     return res.redirect("/surveys/new");
   }
@@ -287,8 +291,8 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
 
   const createdSurvey = await run(
     `
-    INSERT INTO surveys (user_id, category_id, title, description, cover_path, end_at, is_anonymous)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO surveys (user_id, category_id, title, description, cover_path, end_at, has_deadline, is_anonymous)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     RETURNING id
     `,
     [
@@ -298,6 +302,7 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
       description,
       coverFile ? `/uploads/${coverFile.filename}` : null,
       endDate.toISOString(),
+      hasDeadline,
       isAnonymous
     ]
   );
@@ -590,10 +595,10 @@ app.get("/surveys/:id/analytics", isAuthenticated, async (req, res) => {
 
 app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
   const surveyId = Number(req.params.id);
-  const survey = await get("SELECT id, end_at FROM surveys WHERE id = ?", [surveyId]);
+  const survey = await get("SELECT id, end_at, has_deadline FROM surveys WHERE id = ?", [surveyId]);
   if (!survey) return res.status(404).render("404");
 
-  if (new Date(survey.end_at) <= new Date()) {
+  if (survey.has_deadline && new Date(survey.end_at) <= new Date()) {
     setFlash(req, "error", "РЎСЂРѕРє Р°РЅРєРµС‚РёСЂРѕРІР°РЅРёСЏ РёСЃС‚РµРє.");
     return res.redirect(`/surveys/${surveyId}`);
   }

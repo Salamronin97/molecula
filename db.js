@@ -109,6 +109,7 @@ async function initDb() {
       question_text TEXT NOT NULL,
       question_type TEXT NOT NULL CHECK (question_type IN ('text', 'single', 'multi', 'scale')),
       is_required BOOLEAN DEFAULT TRUE,
+      next_question_order INTEGER,
       sort_order INTEGER DEFAULT 0
     )
   `);
@@ -167,6 +168,7 @@ async function initDb() {
   `);
 
   await run("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_path TEXT");
+  await run("ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS next_question_order INTEGER");
   await run("INSERT INTO categories (name, slug) VALUES (?, ?) ON CONFLICT (slug) DO NOTHING", ["Разное", "misc"]);
 }
 

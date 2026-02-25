@@ -99,11 +99,13 @@ function addQuestion(questionData) {
     const typeSelect = inserted.querySelector('select[name="question_types"]');
     const requiredInput = inserted.querySelector('input[name="question_required"]');
     const optionsInput = inserted.querySelector('textarea[name="question_options"]');
+    const nextOrderInput = inserted.querySelector('input[name="question_next_orders"]');
 
     if (textInput) textInput.value = questionData.text || "";
     if (typeSelect) typeSelect.value = questionData.type || "text";
     if (requiredInput) requiredInput.checked = questionData.required !== false;
     if (optionsInput) optionsInput.value = (questionData.options || []).join("\n");
+    if (nextOrderInput) nextOrderInput.value = questionData.next || "";
   }
 
   bindQuestionBlock(inserted);

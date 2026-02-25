@@ -216,6 +216,9 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
   const rawQuestionTypes = Array.isArray(req.body.question_types) ? req.body.question_types : [req.body.question_types];
   const rawQuestionRequired = Array.isArray(req.body.question_required) ? req.body.question_required : [req.body.question_required];
   const rawQuestionOptions = Array.isArray(req.body.question_options) ? req.body.question_options : [req.body.question_options];
+  const rawQuestionNextOrders = Array.isArray(req.body.question_next_orders)
+    ? req.body.question_next_orders
+    : [req.body.question_next_orders];
 
   if (!title || !description || !endAt) {
     setFlash(req, "error", "Р—Р°РїРѕР»РЅРёС‚Рµ РІСЃРµ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рµ РїРѕР»СЏ.");
@@ -253,13 +256,23 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
       questionText,
       questionType,
       isRequired: rawQuestionRequired[i] === "on" || rawQuestionRequired[i] === "1",
-      options: optionsLines
+      options: optionsLines,
+      nextQuestionOrder: Number(rawQuestionNextOrders[i] || 0) || null
     });
   }
 
   if (!questions.length) {
     setFlash(req, "error", "Р”РѕР±Р°РІСЊС‚Рµ С…РѕС‚СЏ Р±С‹ РѕРґРёРЅ РІРѕРїСЂРѕСЃ.");
     return res.redirect("/surveys/new");
+  }
+
+  for (let i = 0; i < questions.length; i += 1) {
+    const nextOrder = questions[i].nextQuestionOrder;
+    if (!nextOrder) continue;
+    if (nextOrder <= i + 1 || nextOrder > questions.length) {
+      setFlash(req, "error", "Invalid branching rule.");
+      return res.redirect("/surveys/new");
+    }
   }
 
   const allFiles = Array.isArray(req.files) ? req.files : [];
@@ -303,11 +316,11 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
     const q = questions[i];
     const createdQuestion = await run(
       `
-      INSERT INTO survey_questions (survey_id, question_text, question_type, is_required, sort_order)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO survey_questions (survey_id, question_text, question_type, is_required, next_question_order, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?)
       RETURNING id
       `,
-      [surveyId, q.questionText, q.questionType, q.isRequired, i]
+      [surveyId, q.questionText, q.questionType, q.isRequired, q.nextQuestionOrder, i]
     );
     const questionId = createdQuestion.rows[0].id;
 
@@ -323,7 +336,7 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
   }
 
   setFlash(req, "success", "Submitted.");
-  res.redirect(`/surveys/${surveyId}/thanks`);
+  res.redirect(`/surveys/${surveyId}`);
 });
 
 app.get("/surveys/:id", async (req, res) => {
@@ -603,7 +616,22 @@ app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
   }
 
   const responseId = responseRow.rows[0].id;
-  for (const question of questions) {
+  const skippedQuestionIds = new Set();
+
+  const applyBranching = (questionIndex, hasAnswer) => {
+    const question = questions[questionIndex];
+    if (!hasAnswer || !question.next_question_order) return;
+    const targetIndex = Number(question.next_question_order) - 1;
+    if (Number.isNaN(targetIndex) || targetIndex <= questionIndex || targetIndex >= questions.length) return;
+    for (let idx = questionIndex + 1; idx < targetIndex; idx += 1) {
+      skippedQuestionIds.add(questions[idx].id);
+    }
+  };
+
+  for (let questionIndex = 0; questionIndex < questions.length; questionIndex += 1) {
+    const question = questions[questionIndex];
+    if (skippedQuestionIds.has(question.id)) continue;
+
     const key = `q_${question.id}`;
     const value = req.body[key];
 
@@ -616,6 +644,7 @@ app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
       if (textValue) {
         await run("INSERT INTO survey_answers (response_id, question_id, text_value) VALUES (?, ?, ?)", [responseId, question.id, textValue]);
       }
+      applyBranching(questionIndex, !!textValue);
       continue;
     }
 
@@ -632,6 +661,7 @@ app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
       if (value) {
         await run("INSERT INTO survey_answers (response_id, question_id, number_value) VALUES (?, ?, ?)", [responseId, question.id, num]);
       }
+      applyBranching(questionIndex, !!value);
       continue;
     }
 
@@ -649,6 +679,7 @@ app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
       if (value) {
         await run("INSERT INTO survey_answers (response_id, question_id, option_id) VALUES (?, ?, ?)", [responseId, question.id, optionId]);
       }
+      applyBranching(questionIndex, !!value);
       continue;
     }
 
@@ -665,6 +696,7 @@ app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
       }
       await run("INSERT INTO survey_answers (response_id, question_id, option_id) VALUES (?, ?, ?)", [responseId, question.id, optionId]);
     }
+    applyBranching(questionIndex, rawValues.length > 0);
   }
 
   setFlash(req, "success", "Submitted.");

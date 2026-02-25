@@ -66,6 +66,9 @@
       <% questions.forEach((question, index) => { %>
         <div class="question-view">
           <h3><%= index + 1 %>. <%= question.question_text %> <%= question.is_required ? "*" : "" %></h3>
+          <% if (question.next_question_order) { %>
+            <p class="muted">После ответа переход к вопросу №<%= question.next_question_order %></p>
+          <% } %>
           <% if (question.question_type === "text") { %>
             <textarea name="q_<%= question.id %>" rows="3" <%= question.is_required ? "required" : "" %>></textarea>
           <% } %>

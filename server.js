@@ -23,7 +23,7 @@ const upload = multer({
   limits: { fileSize: 30 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) return cb(null, true);
-    cb(new Error("Р”РѕРїСѓСЃРєР°СЋС‚СЃСЏ С‚РѕР»СЊРєРѕ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ Рё РІРёРґРµРѕ."));
+    cb(new Error("Only image and video files are allowed."));
   }
 });
 
@@ -50,7 +50,11 @@ app.use(
 );
 
 function setFlash(req, type, message) {
-  req.session.flash = { type, message };
+  if (type === "error") {
+    req.session.flash = { type, message: "Ошибка выполнения операции." };
+    return;
+  }
+  req.session.flash = { type, message: "Операция выполнена." };
 }
 
 function isAuthenticated(req, res, next) {
@@ -707,7 +711,7 @@ app.use((_req, res) => {
 });
 
 app.use((err, req, res, _next) => {
-  setFlash(req, "error", err.message || "РћС€РёР±РєР° СЃРµСЂРІРµСЂР°.");
+  setFlash(req, "error", err.message || "Ошибка сервера.");
   res.redirect(req.get("Referrer") || "/surveys");
 });
 
@@ -720,6 +724,11 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+
+
+
+
 
 
 

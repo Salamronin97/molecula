@@ -1,27 +1,54 @@
 <%- include("partials/header") %>
 
-<section class="hero">
-  <h1>Интерактивный веб-сайт для анкетирования и голосования</h1>
-  <p>Создавайте анкеты, проводите голосования, анализируйте результаты и управляйте обратной связью пользователей.</p>
-  <div class="hero-actions">
-    <a class="btn" href="/surveys">Перейти к анкетам</a>
-    <a class="btn ghost" href="/surveys/new">Создать анкету</a>
-  </div>
-</section>
+<section class="landing">
+  <div class="landing-logo">⚡</div>
+  <h1 class="landing-title">Molecula</h1>
+  <p class="landing-subtitle">Платформа анкетирования и голосования</p>
 
-<section class="cards">
-  <article class="card">
-    <h3>Анкетирование</h3>
-    <p>Поддерживаются разные типы вопросов: текст, одиночный выбор, множественный выбор и шкала.</p>
-  </article>
-  <article class="card">
-    <h3>Голосование</h3>
-    <p>Выбор вариантов с автоматическим подсчетом результатов и защитой от повторной отправки.</p>
-  </article>
-  <article class="card">
-    <h3>Модерация</h3>
-    <p>Администратор управляет жалобами, блокирует пользователей и удаляет нежелательный контент.</p>
-  </article>
+  <div class="landing-about">
+    <p>
+      Molecula - сервис для создания интерактивных анкет и голосований.
+      Пользователи публикуют опросы, прикрепляют фото и видео, получают ответы и обсуждают результаты.
+    </p>
+    <p>
+      В системе доступны регистрация, личный кабинет, анонимные режимы голосования, контроль повторных ответов и администрирование.
+    </p>
+  </div>
+
+  <div class="landing-actions">
+    <a class="btn" href="/surveys">Открыть список опросов</a>
+    <a class="btn ghost" href="/surveys/new">Создать новый опрос</a>
+  </div>
+
+  <div class="boards-grid">
+    <div class="boards-col">
+      <h3>Тематические разделы</h3>
+      <a href="/surveys">Общество</a>
+      <a href="/surveys">Образование</a>
+      <a href="/surveys">Медицина</a>
+      <a href="/surveys">Технологии</a>
+      <a href="/surveys">Экология</a>
+      <a href="/surveys">Культура</a>
+    </div>
+    <div class="boards-col">
+      <h3>Сервис</h3>
+      <a href="/register">Регистрация</a>
+      <a href="/login">Вход</a>
+      <a href="/surveys/new">Создание опроса</a>
+      <a href="/me">Личный кабинет</a>
+      <a href="/me/responses">Мои ответы</a>
+      <a href="/requisites">Реквизиты автора</a>
+    </div>
+    <div class="boards-col">
+      <h3>Функции</h3>
+      <a href="/surveys">Поиск по ID и названию</a>
+      <a href="/surveys">Прикрепление медиа</a>
+      <a href="/surveys">Таймер окончания</a>
+      <a href="/surveys">Анонимные ответы</a>
+      <a href="/surveys">Комментарии и жалобы</a>
+      <a href="/admin">Администрирование</a>
+    </div>
+  </div>
 </section>
 
 <%- include("partials/footer") %>

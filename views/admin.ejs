@@ -2,7 +2,7 @@
 
 <section class="card">
   <h1>Админ-панель</h1>
-  <p class="muted">Управление пользователями, анкетами, комментариями и жалобами.</p>
+  <p class="muted">Управление пользователями, опросами, комментариями и жалобами.</p>
 </section>
 
 <section class="card">
@@ -20,11 +20,11 @@
 </section>
 
 <section class="card">
-  <h2>Анкеты</h2>
+  <h2>Опросы</h2>
   <% surveys.forEach((survey) => { %>
     <div class="admin-row">
       <a href="/surveys/<%= survey.id %>"><%= survey.title %></a>
-      <form action="/admin/surveys/<%= survey.id %>/delete" method="POST" onsubmit="return confirm('Удалить анкету?')">
+      <form action="/admin/surveys/<%= survey.id %>/delete" method="POST" onsubmit="return confirm('Удалить опрос?')">
         <button type="submit">Удалить</button>
       </form>
     </div>

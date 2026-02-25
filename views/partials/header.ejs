@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Портал анкетирования</title>
+  <title>Molecula - Анкеты и голосования</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="gov-header">
     <div class="container gov-header-inner">
-      <a href="/" class="gov-brand">Портал анкетирования</a>
+      <a href="/" class="gov-brand">Molecula</a>
       <nav class="gov-nav">
-        <a href="/surveys">Анкеты</a>
+        <a href="/surveys">Опросы</a>
+        <a href="/requisites">Реквизиты</a>
         <% if (currentUser) { %>
-          <a href="/surveys/new">Создать анкету</a>
-          <a href="/me">Личный кабинет</a>
+          <a href="/surveys/new">Создать опрос</a>
+          <a href="/me">Кабинет</a>
           <a href="/me/responses">Мои ответы</a>
           <% if (currentUser.is_admin) { %>
-            <a href="/admin">Админ-панель</a>
+            <a href="/admin">Админ</a>
           <% } %>
           <form action="/logout" method="POST">
             <button type="submit">Выйти</button>

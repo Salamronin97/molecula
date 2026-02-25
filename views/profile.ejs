@@ -5,7 +5,7 @@
     <img src="<%= profileUser.avatar_path %>" alt="avatar" class="profile-avatar" />
   <% } %>
   <h1><%= profileUser.username %></h1>
-  <p class="muted">ID: <%= profileUser.id %> · Зарегистрирован: <%= profileUser.created_at %> <%= profileUser.is_admin ? "· Администратор" : "" %></p>
+  <p class="muted">ID: <%= profileUser.id %> · Регистрация: <%= profileUser.created_at %> <%= profileUser.is_admin ? "· Администратор" : "" %></p>
   <p><%= profileUser.bio || "Описание пока не заполнено." %></p>
   <% if (currentUser && currentUser.id === profileUser.id) { %>
     <a href="/me/edit" class="btn ghost">Редактировать профиль</a>
@@ -13,9 +13,9 @@
 </section>
 
 <section class="card">
-  <h2>Анкеты пользователя</h2>
+  <h2>Опросы пользователя</h2>
   <% if (!surveys.length) { %>
-    <p>Пока нет опубликованных анкет.</p>
+    <p>Пока нет опубликованных опросов.</p>
   <% } %>
   <% surveys.forEach((survey) => { %>
     <article class="survey-item">

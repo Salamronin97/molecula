@@ -1,9 +1,25 @@
 <%- include("../partials/header") %>
 
 <section class="card form-card">
-  <h1>Создание опроса</h1>
+  <h1>Создание анкеты</h1>
+
+  <div class="template-box">
+    <label>Шаблон анкеты
+      <select id="template-select">
+        <option value="">Без шаблона</option>
+        <option value="customer_feedback">Оценка сервиса</option>
+        <option value="education_quality">Качество обучения</option>
+        <option value="event_feedback">Обратная связь по мероприятию</option>
+      </select>
+    </label>
+    <div class="template-actions">
+      <button type="button" class="btn ghost" id="apply-template">Применить шаблон</button>
+      <button type="button" class="btn ghost" id="clear-questions">Очистить вопросы</button>
+    </div>
+  </div>
+
   <form action="/surveys" method="POST" enctype="multipart/form-data" id="survey-form">
-    <label>Название опроса
+    <label>Название анкеты
       <input type="text" name="title" required maxlength="160" />
     </label>
     <label>Описание
@@ -25,8 +41,10 @@
 
     <h2>Вопросы</h2>
     <div id="questions"></div>
-    <button type="button" class="btn ghost" id="add-question">Добавить вопрос</button>
-    <button type="submit" class="btn">Опубликовать опрос</button>
+    <div class="template-actions">
+      <button type="button" class="btn ghost" id="add-question">Добавить вопрос</button>
+      <button type="submit" class="btn">Опубликовать анкету</button>
+    </div>
   </form>
 </section>
 
@@ -38,14 +56,14 @@
     <label>Тип вопроса
       <select name="question_types" class="question-type">
         <option value="text">Текстовый ответ</option>
-        <option value="single">Один вариант (радио)</option>
-        <option value="multi">Несколько вариантов (чекбоксы)</option>
+        <option value="single">Один вариант</option>
+        <option value="multi">Несколько вариантов</option>
         <option value="scale">Шкала 1-5</option>
       </select>
     </label>
     <label class="checkline">
       <input type="checkbox" name="question_required" checked />
-      Обязательный
+      Обязательный вопрос
     </label>
     <label class="options-block">Варианты ответа (каждый с новой строки)
       <textarea name="question_options" rows="4"></textarea>

@@ -322,8 +322,8 @@ app.post("/surveys", isAuthenticated, upload.any(), async (req, res) => {
     }
   }
 
-  setFlash(req, "success", "РђРЅРєРµС‚Р° РѕРїСѓР±Р»РёРєРѕРІР°РЅР°.");
-  res.redirect(`/surveys/${surveyId}`);
+  setFlash(req, "success", "Submitted.");
+  res.redirect(`/surveys/${surveyId}/thanks`);
 });
 
 app.get("/surveys/:id", async (req, res) => {
@@ -402,6 +402,7 @@ app.get("/surveys/:id", async (req, res) => {
   }
 
   const responsesCount = await get("SELECT COUNT(*)::int AS total FROM survey_responses WHERE survey_id = ?", [survey.id]);
+  const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
 
   res.render("surveys/show", {
     survey,
@@ -409,7 +410,8 @@ app.get("/surveys/:id", async (req, res) => {
     comments,
     hasResponded,
     questionStats,
-    responsesCount: Number(responsesCount.total || 0)
+    responsesCount: Number(responsesCount.total || 0),
+    baseUrl
   });
 });
 
@@ -477,6 +479,100 @@ app.get("/surveys/:id/results.csv", isAuthenticated, async (req, res) => {
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename=\"survey-${surveyId}-results.csv\"`);
   res.send(lines.join("\n"));
+});
+
+app.get("/surveys/:id/thanks", isAuthenticated, async (req, res) => {
+  const surveyId = Number(req.params.id);
+  const survey = await get("SELECT id, title FROM surveys WHERE id = ?", [surveyId]);
+  if (!survey) return res.status(404).render("404");
+
+  const responseRow = await get("SELECT id, created_at FROM survey_responses WHERE survey_id = ? AND user_id = ?", [
+    surveyId,
+    req.session.user.id
+  ]);
+  if (!responseRow) return res.redirect(`/surveys/${surveyId}`);
+
+  res.render("surveys/thanks", { survey, responseRow });
+});
+
+app.get("/surveys/:id/analytics", isAuthenticated, async (req, res) => {
+  const surveyId = Number(req.params.id);
+  const survey = await get("SELECT id, user_id, title FROM surveys WHERE id = ?", [surveyId]);
+  if (!survey) return res.status(404).render("404");
+
+  const isOwner = req.session.user.id === Number(survey.user_id);
+  if (!isOwner && !req.session.user.is_admin) {
+    setFlash(req, "error", "Access denied.");
+    return res.redirect(`/surveys/${surveyId}`);
+  }
+
+  const questions = await all(
+    "SELECT id, question_text, question_type FROM survey_questions WHERE survey_id = ? ORDER BY sort_order, id",
+    [surveyId]
+  );
+  const totalResponsesRow = await get("SELECT COUNT(*)::int AS total FROM survey_responses WHERE survey_id = ?", [surveyId]);
+  const totalResponses = Number(totalResponsesRow?.total || 0);
+
+  const analytics = [];
+  for (const question of questions) {
+    if (question.question_type === "single" || question.question_type === "multi") {
+      const options = await all(
+        `
+        SELECT o.id, o.option_text, COUNT(a.id)::int AS votes
+        FROM survey_question_options o
+        LEFT JOIN survey_answers a ON a.option_id = o.id
+        WHERE o.question_id = ?
+        GROUP BY o.id, o.option_text
+        ORDER BY o.sort_order, o.id
+        `,
+        [question.id]
+      );
+      analytics.push({ ...question, options });
+      continue;
+    }
+
+    if (question.question_type === "scale") {
+      const avgRow = await get(
+        "SELECT AVG(number_value)::float AS avg_score, COUNT(*)::int AS answers_count FROM survey_answers WHERE question_id = ? AND number_value IS NOT NULL",
+        [question.id]
+      );
+      const bucketsRaw = await all(
+        `
+        SELECT number_value::int AS score, COUNT(*)::int AS count
+        FROM survey_answers
+        WHERE question_id = ? AND number_value IS NOT NULL
+        GROUP BY number_value
+        ORDER BY number_value
+        `,
+        [question.id]
+      );
+      const bucketMap = new Map(bucketsRaw.map((r) => [Number(r.score), Number(r.count)]));
+      const buckets = [1, 2, 3, 4, 5].map((score) => ({ score, count: bucketMap.get(score) || 0 }));
+      analytics.push({
+        ...question,
+        avg_score: avgRow?.avg_score ? Number(avgRow.avg_score).toFixed(2) : "0.00",
+        answers_count: Number(avgRow?.answers_count || 0),
+        buckets
+      });
+      continue;
+    }
+
+    const textAnswers = await all(
+      `
+      SELECT a.text_value, r.created_at, u.username
+      FROM survey_answers a
+      JOIN survey_responses r ON r.id = a.response_id
+      JOIN users u ON u.id = r.user_id
+      WHERE a.question_id = ? AND COALESCE(TRIM(a.text_value), '') <> ''
+      ORDER BY a.created_at DESC
+      LIMIT 20
+      `,
+      [question.id]
+    );
+    analytics.push({ ...question, textAnswers });
+  }
+
+  res.render("surveys/analytics", { survey, analytics, totalResponses });
 });
 
 app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
@@ -571,8 +667,8 @@ app.post("/surveys/:id/respond", isAuthenticated, async (req, res) => {
     }
   }
 
-  setFlash(req, "success", "РћС‚РІРµС‚С‹ СЃРѕС…СЂР°РЅРµРЅС‹.");
-  res.redirect(`/surveys/${surveyId}`);
+  setFlash(req, "success", "Submitted.");
+  res.redirect(`/surveys/${surveyId}/thanks`);
 });
 
 app.post("/surveys/:id/comments", isAuthenticated, async (req, res) => {
@@ -583,7 +679,7 @@ app.post("/surveys/:id/comments", isAuthenticated, async (req, res) => {
     return res.redirect(`/surveys/${surveyId}`);
   }
   await run("INSERT INTO survey_comments (survey_id, user_id, body) VALUES (?, ?, ?)", [surveyId, req.session.user.id, body]);
-  setFlash(req, "success", "РљРѕРјРјРµРЅС‚Р°СЂРёР№ РґРѕР±Р°РІР»РµРЅ.");
+  setFlash(req, "success", "Comment added.");
   res.redirect(`/surveys/${surveyId}`);
 });
 
@@ -724,6 +820,7 @@ async function bootstrap() {
 }
 
 bootstrap();
+
 
 
 

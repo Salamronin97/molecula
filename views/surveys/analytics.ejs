@@ -1,0 +1,61 @@
+<%- include("../partials/header") %>
+
+<section class="card survey-page">
+  <h1>Аналитика анкеты</h1>
+  <p class="muted">Анкета: <strong><%= survey.title %></strong></p>
+  <p class="muted">Всего ответов: <strong><%= totalResponses %></strong></p>
+  <div class="template-actions">
+    <a href="/surveys/<%= survey.id %>" class="btn ghost">К анкете</a>
+    <a href="/surveys/<%= survey.id %>/results.csv" class="btn">Скачать CSV</a>
+  </div>
+</section>
+
+<% analytics.forEach((item) => { %>
+  <section class="card survey-page">
+    <h2><%= item.question_text %></h2>
+    <p class="muted">Тип: <%= item.question_type %></p>
+
+    <% if (item.question_type === "single" || item.question_type === "multi") { %>
+      <div class="analytics-bars">
+        <% item.options.forEach((opt) => { %>
+          <div class="analytics-row">
+            <div class="analytics-label"><%= opt.option_text %></div>
+            <div class="analytics-value"><%= opt.votes %></div>
+          </div>
+          <div class="analytics-bar-bg">
+            <div class="analytics-bar-fill" style="width:<%= totalResponses > 0 ? Math.min(100, Math.round((opt.votes / totalResponses) * 100)) : 0 %>%"></div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (item.question_type === "scale") { %>
+      <p class="muted">Средняя оценка: <strong><%= item.avg_score %></strong> (ответов: <%= item.answers_count %>)</p>
+      <div class="analytics-bars">
+        <% item.buckets.forEach((bucket) => { %>
+          <div class="analytics-row">
+            <div class="analytics-label">Оценка <%= bucket.score %></div>
+            <div class="analytics-value"><%= bucket.count %></div>
+          </div>
+          <div class="analytics-bar-bg">
+            <div class="analytics-bar-fill" style="width:<%= item.answers_count > 0 ? Math.min(100, Math.round((bucket.count / item.answers_count) * 100)) : 0 %>%"></div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (item.question_type === "text") { %>
+      <% if (!item.textAnswers.length) { %>
+        <p class="muted">Пока нет текстовых ответов.</p>
+      <% } %>
+      <% item.textAnswers.forEach((row) => { %>
+        <div class="comment">
+          <div class="muted"><%= row.username %> · <%= row.created_at %></div>
+          <p><%= row.text_value %></p>
+        </div>
+      <% }) %>
+    <% } %>
+  </section>
+<% }) %>
+
+<%- include("../partials/footer") %>

@@ -146,6 +146,27 @@ a {
   gap: 10px;
 }
 
+.template-box {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.owner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -413,6 +434,78 @@ select {
   gap: 8px;
 }
 
+.analytics-bars {
+  display: grid;
+  gap: 8px;
+}
+
+.analytics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.analytics-label {
+  color: #2f3a53;
+}
+
+.analytics-value {
+  color: #58647f;
+}
+
+.analytics-bar-bg {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #e7edf8;
+  overflow: hidden;
+}
+
+.analytics-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2e8cf0, #22ba98);
+}
+
+.share-box {
+  margin: 10px 0 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f9fbff;
+}
+
+.share-label {
+  margin-bottom: 6px;
+}
+
+.share-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.share-row input {
+  background: #fff;
+}
+
+.share-row button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.share-qr {
+  width: 150px;
+  height: 150px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
 .profile-card p {
   margin: 8px 0;
 }
@@ -458,6 +551,10 @@ select {
 
   .search-form {
     grid-template-columns: 1fr auto;
+  }
+
+  .share-row {
+    grid-template-columns: 1fr;
   }
 
   .home-hero h1 {

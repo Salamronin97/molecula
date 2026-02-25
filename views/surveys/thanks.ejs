@@ -1,0 +1,14 @@
+<%- include("../partials/header") %>
+
+<section class="card survey-page">
+  <h1>Спасибо за участие</h1>
+  <p>Ваши ответы успешно сохранены.</p>
+  <p class="muted">Анкета: <strong><%= survey.title %></strong></p>
+  <p class="muted">Время отправки: <%= responseRow.created_at %></p>
+  <div class="template-actions">
+    <a href="/surveys/<%= survey.id %>" class="btn ghost">Вернуться к опросу</a>
+    <a href="/surveys" class="btn">К списку опросов</a>
+  </div>
+</section>
+
+<%- include("../partials/footer") %>

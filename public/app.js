@@ -17,9 +17,60 @@ document.querySelectorAll("[data-countdown]").forEach((el) => {
   tick();
 });
 
+const surveyTemplates = {
+  customer_feedback: {
+    title: "Оценка качества обслуживания",
+    description: "Короткая анкета для оценки качества сервиса и выявления зон улучшения.",
+    questions: [
+      { text: "Насколько вы довольны качеством обслуживания?", type: "scale", required: true, options: [] },
+      { text: "Что понравилось больше всего?", type: "text", required: false, options: [] },
+      {
+        text: "Какие аспекты стоит улучшить?",
+        type: "multi",
+        required: false,
+        options: ["Скорость обслуживания", "Качество консультации", "Интерфейс сайта", "Коммуникация поддержки"]
+      },
+      { text: "Порекомендуете ли вы нас знакомым?", type: "single", required: true, options: ["Да", "Нет"] }
+    ]
+  },
+  education_quality: {
+    title: "Анкета по качеству обучения",
+    description: "Сбор обратной связи о программе и преподавании.",
+    questions: [
+      { text: "Оцените доступность материала", type: "scale", required: true, options: [] },
+      { text: "Оцените работу преподавателя", type: "scale", required: true, options: [] },
+      { text: "Что было наиболее полезным в курсе?", type: "text", required: false, options: [] },
+      {
+        text: "Какие форматы обучения для вас удобнее?",
+        type: "multi",
+        required: true,
+        options: ["Лекции", "Практика", "Домашние задания", "Проектная работа"]
+      }
+    ]
+  },
+  event_feedback: {
+    title: "Обратная связь по мероприятию",
+    description: "Анкета для оценки организации и содержания мероприятия.",
+    questions: [
+      { text: "Оцените организацию мероприятия", type: "scale", required: true, options: [] },
+      { text: "Оцените полезность контента", type: "scale", required: true, options: [] },
+      {
+        text: "Какой формат вам понравился больше?",
+        type: "single",
+        required: true,
+        options: ["Доклады", "Панельная дискуссия", "Практические сессии"]
+      },
+      { text: "Ваши предложения по улучшению", type: "text", required: false, options: [] }
+    ]
+  }
+};
+
 const questionsWrap = document.getElementById("questions");
 const addQuestionBtn = document.getElementById("add-question");
 const questionTemplate = document.getElementById("question-template");
+const applyTemplateBtn = document.getElementById("apply-template");
+const clearQuestionsBtn = document.getElementById("clear-questions");
+const templateSelect = document.getElementById("template-select");
 
 function bindQuestionBlock(block) {
   const select = block.querySelector(".question-type");
@@ -36,16 +87,75 @@ function bindQuestionBlock(block) {
   toggleOptions();
 }
 
-function addQuestion() {
-  if (!questionTemplate || !questionsWrap) return;
+function addQuestion(questionData) {
+  if (!questionTemplate || !questionsWrap) return null;
   const content = questionTemplate.content.cloneNode(true);
-  const block = content.querySelector(".question-builder");
   questionsWrap.appendChild(content);
   const inserted = questionsWrap.lastElementChild;
-  bindQuestionBlock(inserted || block);
+  if (!inserted) return null;
+
+  if (questionData) {
+    const textInput = inserted.querySelector('input[name="question_texts"]');
+    const typeSelect = inserted.querySelector('select[name="question_types"]');
+    const requiredInput = inserted.querySelector('input[name="question_required"]');
+    const optionsInput = inserted.querySelector('textarea[name="question_options"]');
+
+    if (textInput) textInput.value = questionData.text || "";
+    if (typeSelect) typeSelect.value = questionData.type || "text";
+    if (requiredInput) requiredInput.checked = questionData.required !== false;
+    if (optionsInput) optionsInput.value = (questionData.options || []).join("\n");
+  }
+
+  bindQuestionBlock(inserted);
+  return inserted;
+}
+
+function clearQuestions() {
+  if (!questionsWrap) return;
+  questionsWrap.innerHTML = "";
+}
+
+function applyTemplate() {
+  if (!templateSelect) return;
+  const key = templateSelect.value;
+  const template = surveyTemplates[key];
+  if (!template) return;
+
+  const titleInput = document.querySelector('input[name="title"]');
+  const descriptionInput = document.querySelector('textarea[name="description"]');
+  if (titleInput) titleInput.value = template.title;
+  if (descriptionInput) descriptionInput.value = template.description;
+
+  clearQuestions();
+  template.questions.forEach((q) => addQuestion(q));
 }
 
 if (addQuestionBtn) {
-  addQuestionBtn.addEventListener("click", addQuestion);
+  addQuestionBtn.addEventListener("click", () => addQuestion());
+}
+if (clearQuestionsBtn) {
+  clearQuestionsBtn.addEventListener("click", clearQuestions);
+}
+if (applyTemplateBtn) {
+  applyTemplateBtn.addEventListener("click", applyTemplate);
+}
+if (questionsWrap && questionTemplate && !questionsWrap.children.length) {
   addQuestion();
+}
+
+const shareLinkInput = document.getElementById("share-link");
+const copyLinkBtn = document.getElementById("copy-link-btn");
+if (shareLinkInput && copyLinkBtn) {
+  copyLinkBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(shareLinkInput.value);
+      copyLinkBtn.textContent = "Скопировано";
+      setTimeout(() => {
+        copyLinkBtn.textContent = "Копировать";
+      }, 1500);
+    } catch (_err) {
+      shareLinkInput.select();
+      document.execCommand("copy");
+    }
+  });
 }
